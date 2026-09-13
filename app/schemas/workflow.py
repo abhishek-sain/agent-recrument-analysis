@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -34,3 +34,16 @@ class OnboardingListItem(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ConvertToPosRequest(BaseModel):
+    converted_by: str
+
+
+class ConvertToPosResponse(BaseModel):
+    id: str
+    user_type: UserType
+    joining_date: date | None
+    pos_conversion_date: date | None
+    ageing_days: int | None
+    message: str

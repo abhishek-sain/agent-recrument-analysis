@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.routers import documents, links, onboarding, workflow
+from app.routers import documents, links, onboarding, reports, workflow
 
 app = FastAPI(
     title="POS / POS Referral Onboarding API",
@@ -34,6 +34,7 @@ app.include_router(links.router)
 app.include_router(onboarding.router)
 app.include_router(documents.router)
 app.include_router(workflow.router)
+app.include_router(reports.router)
 
 
 @app.get("/health")

@@ -162,14 +162,16 @@ afterward.
 `state`, `pincode`, `pan_card`, `educational_qualification`, `aadhaar`,
 `photograph`, `cancelled_cheque` (all five as S3/file URLs),
 `terms_and_conditions`, `consent`, `raised_by`, `status`, `created_at`,
-`updated_at`, `updated_by`, `reviewed_by`.
+`updated_at`, `updated_by`, `reviewed_by`, `joining_date`,
+`pos_conversion_date`.
 
 `terms_and_conditions` is fixed at creation to
 `"we can use your data for onboarding you"` and is **not** part of the
 general form-save payload - it has its own endpoint (see below) so it
 can be changed independently of everything else on the record.
 `reviewed_by` is set automatically to whoever calls the admin review
-endpoint (`APPROVE`/`REJECT`/`SEND_BACK`).
+endpoint (`APPROVE`/`REJECT`/`SEND_BACK`). `joining_date` and
+`pos_conversion_date` feed the Ageing Report - see below.
 
 **`document_details`** (Table-2) - one row per `users_data` record
 (`id` e.g. `DOC-12-09-2026-143059-4`, `users_data_id` FK), holding the
@@ -195,6 +197,29 @@ documents (e.g. by an OCR step, or entered manually): `pan_number`,
 | Documents | `PUT /api/v1/onboarding/{token}/documents/education-details` |
 | Ops (admin) | `GET /api/v1/admin/onboarding?status=UNDER_REVIEW` |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/review` (`APPROVE` / `REJECT` / `SEND_BACK`) |
+| Ops (admin) | `POST /api/v1/admin/onboarding/{id}/convert-to-pos` |
+| Reports | `GET /api/v1/admin/reports/ageing` |
+
+## Ageing Report
+
+Tracks how long a POS Referral stays a referral before being promoted
+to a full POS: **Date of Joining → POS Referral → POS Conversion Date**.
+
+- `joining_date` is stamped automatically the first time a record's
+  status becomes `ACTIVE` (i.e. when ops approves it) - this is "Date of
+  Joining" for both POS and POS Referral records.
+- Conversion is a manual ops action, not automatic:
+  `POST /api/v1/admin/onboarding/{id}/convert-to-pos` (only works on a
+  record that is currently `user_type=POS_REFERRAL` and `status=ACTIVE`)
+  flips `user_type` to `POS` and stamps `pos_conversion_date`.
+- `GET /api/v1/admin/reports/ageing` lists every record that either is
+  currently a POS Referral or was converted from one, with:
+  `date_of_joining`, `pos_conversion_date` (null if still pending),
+  `ageing_days` (days from joining to conversion, or to today if still
+  pending), `conversion_status` (`PENDING` / `CONVERTED`), and
+  `within_90_days` (whether that ageing is within the 90-day target -
+  90 is just a target to measure against, not an enforced cutoff; a
+  referral doesn't expire or auto-convert at 90 days).
 
 ## Notes / things you'll likely want to swap for production
 

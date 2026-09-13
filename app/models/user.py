@@ -77,3 +77,13 @@ class UsersData(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     updated_by: Mapped[str | None] = mapped_column(String(50), nullable=True)
     reviewed_by: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # --- Ageing Report support ---
+    # Date the record was approved/activated (set once, when status first
+    # becomes ACTIVE). This is "Date of Joining" for the Ageing Report.
+    joining_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Set only when a POS_REFERRAL is manually converted to POS. Its
+    # presence is what marks a record as "converted" in the Ageing Report -
+    # user_type itself flips to POS on conversion, so this is the only
+    # record of the fact that it used to be a referral.
+    pos_conversion_date: Mapped[date | None] = mapped_column(Date, nullable=True)

@@ -10,7 +10,9 @@ description: |-
   4. Documents > Upload Document (run once per doc_type)
   5. Onboarding > Submit
   6. Admin > List Under Review
-  7. Admin > Review (Approve / Reject / Send Back)
+  7. Admin > Review (Approve / Reject / Send Back) - APPROVE stamps joining_date
+  8. Admin > Convert to POS - only for an ACTIVE POS_REFERRAL record; stamps pos_conversion_date
+  9. Reports > Ageing Report - Date of Joining -> POS Referral -> POS Conversion Date, with ageing_days and within_90_days
 variables:
   base_url: http://localhost:8000
   token: ""

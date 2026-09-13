@@ -606,6 +606,85 @@
         }
       }
     },
+    "/api/v1/admin/onboarding/{record_id}/convert-to-pos": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Convert To Pos",
+        "description": "Manually promotes an active POS Referral to a full POS. Feeds the\nAgeing Report: joining_date (set on approval) and pos_conversion_date\n(set here) together give the \"how long were they a referral\" duration.",
+        "operationId": "convert_to_pos_api_v1_admin_onboarding__record_id__convert_to_pos_post",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertToPosRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertToPosResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports/ageing": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Ageing Report",
+        "description": "Date of Joining -> POS Referral -> POS Conversion Date.\n\nIncludes every record that either currently is a POS Referral\n(pending conversion) or was converted from one (pos_conversion_date\nis set) - a plain POS that was never a referral has neither and is\nexcluded.",
+        "operationId": "ageing_report_api_v1_admin_reports_ageing_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgeingReportItem"
+                  },
+                  "type": "array",
+                  "title": "Response Ageing Report Api V1 Admin Reports Ageing Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -742,6 +821,90 @@
         "type": "object",
         "title": "AadhaarDetailsUpdate"
       },
+      "AgeingReportItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "number": {
+            "type": "string",
+            "title": "Number"
+          },
+          "raised_by": {
+            "type": "string",
+            "title": "Raised By"
+          },
+          "date_of_joining": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Joining"
+          },
+          "pos_conversion_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pos Conversion Date"
+          },
+          "ageing_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageing Days"
+          },
+          "conversion_status": {
+            "type": "string",
+            "title": "Conversion Status"
+          },
+          "within_90_days": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Within 90 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "number",
+          "raised_by",
+          "date_of_joining",
+          "pos_conversion_date",
+          "ageing_days",
+          "conversion_status",
+          "within_90_days"
+        ],
+        "title": "AgeingReportItem",
+        "description": "One row of the Ageing Report: how long a POS Referral has been (or\nwas) a referral before converting to a POS.\n\nconversion_status:\n  - \"CONVERTED\": already promoted to POS - ageing_days is final.\n  - \"PENDING\": still an active POS Referral - ageing_days counts up\n    to today, and within_90_days tells you if the 90-day target has\n    already been missed."
+      },
       "Body_upload_document_api_v1_onboarding__token__documents_post": {
         "properties": {
           "file": {
@@ -763,6 +926,79 @@
           "DISAGREE"
         ],
         "title": "ConsentStatus"
+      },
+      "ConvertToPosRequest": {
+        "properties": {
+          "converted_by": {
+            "type": "string",
+            "title": "Converted By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "converted_by"
+        ],
+        "title": "ConvertToPosRequest"
+      },
+      "ConvertToPosResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_type": {
+            "$ref": "#/components/schemas/UserType"
+          },
+          "joining_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Joining Date"
+          },
+          "pos_conversion_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pos Conversion Date"
+          },
+          "ageing_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ageing Days"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_type",
+          "joining_date",
+          "pos_conversion_date",
+          "ageing_days",
+          "message"
+        ],
+        "title": "ConvertToPosResponse"
       },
       "DocumentType": {
         "type": "string",

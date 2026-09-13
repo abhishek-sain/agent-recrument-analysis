@@ -1,10 +1,19 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import OnboardingStatus, UsersData
+from app.models.user import OnboardingStatus, UsersData, UserType
 from app.routers.deps import get_record_by_id
-from app.schemas.workflow import OnboardingListItem, ReviewAction, ReviewRequest, ReviewResponse
+from app.schemas.workflow import (
+    ConvertToPosRequest,
+    ConvertToPosResponse,
+    OnboardingListItem,
+    ReviewAction,
+    ReviewRequest,
+    ReviewResponse,
+)
 from app.services.token_service import build_onboarding_url, generate_token
 
 router = APIRouter(prefix="/api/v1/admin/onboarding", tags=["admin"])
@@ -32,12 +41,14 @@ def review_onboarding(
     db: Session = Depends(get_db),
 ):
     if record.status != OnboardingStatus.UNDER_REVIEW:
-        raise HTTPException(status_code=409, detail=f"Record is in status {record.status}, not eligible for review")
+        raise HTTPException(status_code=409, detail=f"Record is in status {record.status.value}, not eligible for review")
 
     new_onboarding_url = None
 
     if payload.action == ReviewAction.APPROVE:
         record.status = OnboardingStatus.ACTIVE  # activation is immediate once approved
+        if record.joining_date is None:
+            record.joining_date = date.today()
 
     elif payload.action == ReviewAction.REJECT:
         record.status = OnboardingStatus.REJECTED
@@ -62,4 +73,37 @@ def review_onboarding(
         status=record.status,
         new_onboarding_url=new_onboarding_url,
         message=message,
+    )
+
+
+@router.post("/{record_id}/convert-to-pos", response_model=ConvertToPosResponse)
+def convert_to_pos(
+    payload: ConvertToPosRequest,
+    record: UsersData = Depends(get_record_by_id),
+    db: Session = Depends(get_db),
+):
+    """
+    Manually promotes an active POS Referral to a full POS. Feeds the
+    Ageing Report: joining_date (set on approval) and pos_conversion_date
+    (set here) together give the "how long were they a referral" duration.
+    """
+    if record.user_type != UserType.POS_REFERRAL:
+        raise HTTPException(status_code=409, detail="Only a POS_REFERRAL record can be converted to POS")
+    if record.status != OnboardingStatus.ACTIVE:
+        raise HTTPException(status_code=409, detail=f"Record is in status {record.status.value}, must be ACTIVE to convert")
+
+    record.user_type = UserType.POS
+    record.pos_conversion_date = date.today()
+    record.updated_by = payload.converted_by
+    db.commit()
+
+    ageing_days = (record.pos_conversion_date - record.joining_date).days if record.joining_date else None
+
+    return ConvertToPosResponse(
+        id=record.id,
+        user_type=record.user_type,
+        joining_date=record.joining_date,
+        pos_conversion_date=record.pos_conversion_date,
+        ageing_days=ageing_days,
+        message="Converted from POS Referral to POS",
     )

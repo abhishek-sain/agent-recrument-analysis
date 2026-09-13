@@ -1,0 +1,6 @@
+$kind: http-request
+description: |-
+  Date of Joining -> POS Referral -> POS Conversion Date. Lists every record that is currently a POS Referral (PENDING) or was converted from one (CONVERTED), with ageing_days and within_90_days (90 days is a target to measure against, not an enforced cutoff - referrals don't auto-expire or auto-convert).
+url: "{{base_url}}/api/v1/admin/reports/ageing"
+method: GET
+order: 1000
