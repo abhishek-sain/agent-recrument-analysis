@@ -1,0 +1,5 @@
+$kind: http-request
+description: Called by the frontend's onboarding page on load to validate the token and fetch prefill data (name, number, user_type, status) before rendering the form.
+url: "{{base_url}}/api/v1/links/{{token}}"
+method: GET
+order: 2000

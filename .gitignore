@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+uploads/*
+!uploads/.gitkeep
+
+# OS / editor / tool artifacts
+.DS_Store
+.claude/
+.~*.docx
+~$*.docx

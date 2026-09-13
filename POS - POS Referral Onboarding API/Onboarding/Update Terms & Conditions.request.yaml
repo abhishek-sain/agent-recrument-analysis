@@ -1,0 +1,13 @@
+$kind: http-request
+description: Edits ONLY terms_and_conditions, independently of Save Form. This field is fixed to 'we can use your data for onboarding you' when the record is created; this is the only way to change it afterward.
+url: "{{base_url}}/api/v1/onboarding/{{token}}/terms-and-conditions"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "terms_and_conditions": "we can use your data for onboarding you"
+    }
+order: 3000

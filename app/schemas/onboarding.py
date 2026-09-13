@@ -1,0 +1,60 @@
+from datetime import date, datetime
+
+from pydantic import BaseModel
+
+from app.models.user import UserType, OnboardingStatus, ConsentStatus
+
+
+class OnboardingFormUpdate(BaseModel):
+    """
+    Partial/upsert payload for the fields users_data actually has.
+    terms_and_conditions is NOT editable here - it's a fixed value set at
+    creation, editable only via PUT .../terms-and-conditions.
+    """
+
+    dob: date | None = None
+    email: str | None = None
+    city: str | None = None
+    state: str | None = None
+    pincode: str | None = None
+    consent: ConsentStatus | None = None
+
+
+class TermsAndConditionsUpdate(BaseModel):
+    terms_and_conditions: str
+
+
+class OnboardingRecordResponse(BaseModel):
+    id: str
+    name: str
+    number: str
+    user_type: UserType
+    status: OnboardingStatus
+    raised_by: str
+
+    dob: date | None = None
+    email: str | None = None
+    city: str | None = None
+    state: str | None = None
+    pincode: str | None = None
+
+    pan_card: str | None = None
+    educational_qualification: str | None = None
+    aadhaar: str | None = None
+    photograph: str | None = None
+    cancelled_cheque: str | None = None
+
+    terms_and_conditions: str | None = None
+    consent: ConsentStatus | None = None
+
+    created_at: datetime
+    updated_at: datetime
+    updated_by: str | None = None
+    reviewed_by: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class SubmitResponse(BaseModel):
+    status: OnboardingStatus
+    message: str

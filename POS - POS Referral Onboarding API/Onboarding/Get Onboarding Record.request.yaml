@@ -1,0 +1,5 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/onboarding/{{token}}"
+method: GET
+examples: ./.resources/Get Onboarding Record.resources/examples
+order: 1000

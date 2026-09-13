@@ -1,0 +1,21 @@
+$kind: http-request
+description: Writes into the same document_details row (Table-2) as Save PAN Details / Save Education Details.
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents/aadhaar-details"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "aadhaar_number": "123456789012",
+      "aadhaar_name": "RAMESH KUMAR",
+      "aadhaar_dob": "1990-01-15",
+      "aadhaar_gender": "M",
+      "aadhaar_address": "12 MG Road, Pune",
+      "aadhaar_city": "Pune",
+      "aadhaar_district": "Pune",
+      "aadhaar_state": "Maharashtra",
+      "aadhaar_pincode": "411001"
+    }
+order: 7000

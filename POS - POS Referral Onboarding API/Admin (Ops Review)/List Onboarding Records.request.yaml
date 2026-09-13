@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/admin/onboarding?status=UNDER_REVIEW"
+method: GET
+queryParams:
+  - key: status
+    value: UNDER_REVIEW
+    description: Optional. One of LINK_GENERATED, FORM_IN_PROGRESS, SUBMITTED, UNDER_REVIEW, SEND_BACK, REJECTED, APPROVED, ACTIVE
+order: 1000

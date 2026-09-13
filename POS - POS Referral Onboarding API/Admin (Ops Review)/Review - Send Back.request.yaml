@@ -1,0 +1,20 @@
+$kind: http-request
+description: Rotates the onboarding token and returns a fresh new_onboarding_url to resend to the POS/Referral.
+url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "SEND_BACK",
+      "reviewed_by": "OPS01"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const data = pm.response.json();
+      if (data.new_onboarding_url) { console.log('New link issued:', data.new_onboarding_url); }
+    language: text/javascript
+order: 4000

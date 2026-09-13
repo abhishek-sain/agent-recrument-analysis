@@ -1,0 +1,13 @@
+$kind: http-request
+description: "doc_type options: PAN_CARD, AADHAAR, EDUCATIONAL_QUALIFICATION, PHOTOGRAPH, CANCELLED_CHEQUE - each writes the file URL to the matching users_data column."
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PAN_CARD"
+method: POST
+queryParams:
+  doc_type: PAN_CARD
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: []
+order: 1000

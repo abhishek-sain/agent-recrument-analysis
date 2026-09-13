@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=EDUCATIONAL_QUALIFICATION"
+method: POST
+queryParams:
+  doc_type: EDUCATIONAL_QUALIFICATION
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: []
+order: 5000

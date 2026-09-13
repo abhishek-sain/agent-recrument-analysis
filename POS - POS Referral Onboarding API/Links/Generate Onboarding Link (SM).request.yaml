@@ -1,0 +1,25 @@
+$kind: http-request
+description: Called by the SM app after login. Creates the users_data row and returns a token + shareable URL (copy link / WhatsApp / SMS). user_type is POS or POS_REFERRAL.
+url: "{{base_url}}/api/v1/links/generate"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Ramesh Kumar",
+      "number": "9876543210",
+      "user_type": "POS",
+      "raised_by": "SM001"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const data = pm.response.json();
+      pm.collectionVariables.set('token', data.token);
+      pm.collectionVariables.set('record_id', data.id);
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      pm.test('Has onboarding_url', () => pm.expect(data.onboarding_url).to.be.a('string'));
+    language: text/javascript
+order: 1000

@@ -1,0 +1,14 @@
+$kind: http-request
+description: Approves and activates the record (status -> ACTIVE).
+url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "APPROVE",
+      "reviewed_by": "OPS01"
+    }
+order: 2000

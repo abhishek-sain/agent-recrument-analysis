@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "action": "REJECT",
+      "reviewed_by": "OPS01"
+    }
+order: 3000

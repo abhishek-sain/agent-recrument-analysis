@@ -1,0 +1,17 @@
+$kind: collection
+name: POS / POS Referral Onboarding API
+description: |-
+  FastAPI backend for the digital onboarding flow: SM link generation, self-onboarding for POS / POS Referral, document upload, and ops approval workflow. Backed by exactly 2 tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/Education extracted fields), running on SQL Server. Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.
+
+  Flow to test end-to-end:
+  1. Links > Generate Onboarding Link (SM) - sets {{token}} and {{record_id}} automatically
+  2. Links > Resolve Link (Frontend)
+  3. Onboarding > Save Form
+  4. Documents > Upload Document (run once per doc_type)
+  5. Onboarding > Submit
+  6. Admin > List Under Review
+  7. Admin > Review (Approve / Reject / Send Back)
+variables:
+  base_url: http://localhost:8000
+  token: ""
+  record_id: ""

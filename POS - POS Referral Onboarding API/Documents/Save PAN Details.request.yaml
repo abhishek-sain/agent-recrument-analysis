@@ -1,0 +1,17 @@
+$kind: http-request
+description: Writes into the document_details table (Table-2), upserting the one row linked to this users_data record.
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents/pan-details"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "pan_number": "ABCDE1234F",
+      "pan_name": "RAMESH KUMAR",
+      "pan_father_name": "SURESH KUMAR",
+      "pan_dob": "1990-01-15",
+      "pan_gender": "M"
+    }
+order: 6000

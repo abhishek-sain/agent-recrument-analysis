@@ -1,0 +1,5 @@
+$kind: http-request
+description: Validates required fields/documents (name, number, consent, pan_card, aadhaar, photograph), runs a duplicate mobile-number check, and moves the record to UNDER_REVIEW.
+url: "{{base_url}}/api/v1/onboarding/{{token}}/submit"
+method: POST
+order: 4000

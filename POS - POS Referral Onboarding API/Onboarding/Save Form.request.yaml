@@ -1,0 +1,19 @@
+$kind: http-request
+description: Upserts dob, email, city, state, pincode, consent. Same endpoint/body shape for both POS and POS Referral. Can be called multiple times. terms_and_conditions is NOT part of this payload - see 'Update Terms & Conditions' below.
+url: "{{base_url}}/api/v1/onboarding/{{token}}/form"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "dob": "1990-01-15",
+      "email": "ramesh@example.com",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "411001",
+      "consent": "AGREE"
+    }
+examples: ./.resources/Save Form.resources/examples
+order: 2000
