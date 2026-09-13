@@ -1,0 +1,401 @@
+{
+  "info": {
+    "name": "POS / POS Referral Onboarding API",
+    "description": "FastAPI backend for the digital onboarding flow: SM link generation, self-onboarding for POS / POS Referral, document upload, ops approval workflow, POS Referral -> POS conversion, and the Ageing Report. Backed by 2 SQL Server tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/Education extracted fields). Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.\n\nFlow to test end-to-end:\n1. Links > Generate Onboarding Link (SM) - sets {{token}} and {{record_id}} automatically\n2. Links > Resolve Link (Frontend)\n3. Onboarding > Save Form\n4. Documents > Upload Document (run once per doc_type)\n5. Onboarding > Submit\n6. Admin > List Under Review\n7. Admin > Review (Approve / Reject / Send Back) - APPROVE stamps joining_date\n8. Admin > Convert to POS - only for an ACTIVE POS_REFERRAL record; stamps pos_conversion_date\n9. Reports > Ageing Report - Date of Joining -> POS Referral -> POS Conversion Date, with ageing_days and within_90_days",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "pos-onboarding-api-collection"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "record_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Links",
+      "item": [
+        {
+          "name": "Generate Onboarding Link (SM)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('token', data.token);",
+                  "pm.collectionVariables.set('record_id', data.id);",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has onboarding_url', () => pm.expect(data.onboarding_url).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ramesh Kumar\",\n  \"number\": \"9876543210\",\n  \"user_type\": \"POS\",\n  \"raised_by\": \"SM001\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/links/generate", "host": ["{{base_url}}"], "path": ["api", "v1", "links", "generate"] },
+            "description": "Called by the SM app after login. Creates the users_data row and returns a token + shareable URL (copy link / WhatsApp / SMS). user_type is POS or POS_REFERRAL."
+          }
+        },
+        {
+          "name": "Resolve Link (Frontend prefill)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/links/{{token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "links", "{{token}}"]
+            },
+            "description": "Called by the frontend's onboarding page on load to validate the token and fetch prefill data (name, number, user_type, status) before rendering the form."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "item": [
+        {
+          "name": "Get Onboarding Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}"]
+            }
+          }
+        },
+        {
+          "name": "Save Form",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dob\": \"1990-01-15\",\n  \"email\": \"ramesh@example.com\",\n  \"city\": \"Pune\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"411001\",\n  \"consent\": \"AGREE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/form",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "form"]
+            },
+            "description": "Upserts dob, email, city, state, pincode, consent. Same endpoint/body shape for both POS and POS Referral. Can be called multiple times. terms_and_conditions is NOT part of this payload - see 'Update Terms & Conditions' below."
+          }
+        },
+        {
+          "name": "Update Terms & Conditions",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"terms_and_conditions\": \"we can use your data for onboarding you\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/terms-and-conditions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "terms-and-conditions"]
+            },
+            "description": "Edits ONLY terms_and_conditions, independently of Save Form. This field is fixed to 'we can use your data for onboarding you' when the record is created; this is the only way to change it afterward."
+          }
+        },
+        {
+          "name": "Submit (Review & Submit)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "submit"]
+            },
+            "description": "Validates required fields/documents (name, number, consent, pan_card, aadhaar, photograph), runs a duplicate mobile-number check, and moves the record to UNDER_REVIEW."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Document - PAN_CARD",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PAN_CARD",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
+              "query": [{ "key": "doc_type", "value": "PAN_CARD" }]
+            },
+            "description": "doc_type options: PAN_CARD, AADHAAR, EDUCATIONAL_QUALIFICATION, PHOTOGRAPH, CANCELLED_CHEQUE - each writes the file URL to the matching users_data column."
+          }
+        },
+        {
+          "name": "Upload Document - AADHAAR",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
+              "query": [{ "key": "doc_type", "value": "AADHAAR" }]
+            }
+          }
+        },
+        {
+          "name": "Upload Document - PHOTOGRAPH",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PHOTOGRAPH",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
+              "query": [{ "key": "doc_type", "value": "PHOTOGRAPH" }]
+            }
+          }
+        },
+        {
+          "name": "Upload Document - CANCELLED_CHEQUE",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=CANCELLED_CHEQUE",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
+              "query": [{ "key": "doc_type", "value": "CANCELLED_CHEQUE" }]
+            }
+          }
+        },
+        {
+          "name": "Upload Document - EDUCATIONAL_QUALIFICATION",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=EDUCATIONAL_QUALIFICATION",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
+              "query": [{ "key": "doc_type", "value": "EDUCATIONAL_QUALIFICATION" }]
+            }
+          }
+        },
+        {
+          "name": "Save PAN Details",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan_number\": \"ABCDE1234F\",\n  \"pan_name\": \"RAMESH KUMAR\",\n  \"pan_father_name\": \"SURESH KUMAR\",\n  \"pan_dob\": \"1990-01-15\",\n  \"pan_gender\": \"M\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/pan-details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "pan-details"]
+            },
+            "description": "Writes into the document_details table (Table-2), upserting the one row linked to this users_data record."
+          }
+        },
+        {
+          "name": "Save Aadhaar Details",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aadhaar_number\": \"123456789012\",\n  \"aadhaar_name\": \"RAMESH KUMAR\",\n  \"aadhaar_dob\": \"1990-01-15\",\n  \"aadhaar_gender\": \"M\",\n  \"aadhaar_address\": \"12 MG Road, Pune\",\n  \"aadhaar_city\": \"Pune\",\n  \"aadhaar_district\": \"Pune\",\n  \"aadhaar_state\": \"Maharashtra\",\n  \"aadhaar_pincode\": \"411001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/aadhaar-details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "aadhaar-details"]
+            },
+            "description": "Writes into the same document_details row (Table-2) as Save PAN Details / Save Education Details."
+          }
+        },
+        {
+          "name": "Save Education Details",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"education_student_name\": \"Ramesh Kumar\",\n  \"qualification\": \"Bachelor's\",\n  \"course_name\": \"B.Com\",\n  \"institution_name\": \"Pune University College\",\n  \"university_board\": \"Savitribai Phule Pune University\",\n  \"passing_year\": \"2012\",\n  \"percentage\": 72.5,\n  \"result\": \"Pass\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/education-details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "education-details"]
+            },
+            "description": "Writes into the same document_details row (Table-2) as Save PAN Details / Save Aadhaar Details."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin (Ops Review)",
+      "item": [
+        {
+          "name": "List Onboarding Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding?status=UNDER_REVIEW",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "onboarding"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "UNDER_REVIEW",
+                  "description": "Optional. One of LINK_GENERATED, FORM_IN_PROGRESS, SUBMITTED, UNDER_REVIEW, SEND_BACK, REJECTED, APPROVED, ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review - Approve",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+            },
+            "description": "Approves and activates the record (status -> ACTIVE). Also stamps joining_date the first time this happens - this feeds the Ageing Report."
+          }
+        },
+        {
+          "name": "Review - Reject",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REJECT\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+            }
+          }
+        },
+        {
+          "name": "Review - Send Back",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.new_onboarding_url) { console.log('New link issued:', data.new_onboarding_url); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"SEND_BACK\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+            },
+            "description": "Rotates the onboarding token and returns a fresh new_onboarding_url to resend to the POS/Referral."
+          }
+        },
+        {
+          "name": "Convert to POS",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"converted_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/convert-to-pos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "convert-to-pos"]
+            },
+            "description": "Manually promotes an active POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ACTIVE. Stamps pos_conversion_date, which feeds the Ageing Report."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Ageing Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/reports/ageing",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "reports", "ageing"]
+            },
+            "description": "Date of Joining -> POS Referral -> POS Conversion Date. Lists every record that is currently a POS Referral (PENDING) or was converted from one (CONVERTED), with ageing_days and within_90_days (90 days is a target to measure against, not an enforced cutoff - referrals don't auto-expire or auto-convert)."
+          }
+        }
+      ]
+    }
+  ]
+}
