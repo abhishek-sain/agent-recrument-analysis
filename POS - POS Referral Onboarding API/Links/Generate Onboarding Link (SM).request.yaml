@@ -10,6 +10,7 @@ body:
     {
       "name": "Ramesh Kumar",
       "number": "9876543210",
+      "email": "ramesh@example.com",
       "user_type": "POS",
       "raised_by": "SM001"
     }

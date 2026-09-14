@@ -6,6 +6,7 @@ from app.models.user import UserType, OnboardingStatus
 class GenerateLinkRequest(BaseModel):
     name: str = Field(..., max_length=150)
     number: str = Field(..., max_length=15)
+    email: str | None = Field(default=None, max_length=150)
     user_type: UserType
     raised_by: str = Field(..., max_length=50, description="SM employee code")
 

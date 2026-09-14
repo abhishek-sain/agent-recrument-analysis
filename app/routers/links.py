@@ -27,6 +27,7 @@ def generate_link(payload: GenerateLinkRequest, db: Session = Depends(get_db)):
         id=record_id,
         name=payload.name,
         number=payload.number,
+        email=payload.email,
         user_type=payload.user_type,
         onboarding_link=onboarding_url,
         raised_by=payload.raised_by,
