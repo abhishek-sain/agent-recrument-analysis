@@ -1742,6 +1742,10 @@
           "status": {
             "$ref": "#/components/schemas/OnboardingStatus"
           },
+          "onboarding_link": {
+            "type": "string",
+            "title": "Onboarding Link"
+          },
           "raised_by": {
             "type": "string",
             "title": "Raised By"
@@ -1770,6 +1774,7 @@
           "number",
           "user_type",
           "status",
+          "onboarding_link",
           "raised_by",
           "created_at"
         ],

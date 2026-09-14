@@ -29,6 +29,7 @@ class OnboardingListItem(BaseModel):
     number: str
     user_type: UserType
     status: OnboardingStatus
+    onboarding_link: str
     raised_by: str
     reviewed_by: str | None = None
     created_at: datetime
