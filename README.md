@@ -199,8 +199,8 @@ bank details: `age`, `pan_number`, `pan_name`, `pan_father_name`,
 | Ops (admin) | `GET /api/v1/admin/onboarding?status=UNDER_REVIEW` |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/review` (`APPROVE` / `REJECT` / `SEND_BACK`) |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/convert-to-pos` |
-| Ops (admin) | `GET /api/v1/admin/users-data` (full `users_data` table) |
-| Ops (admin) | `GET /api/v1/admin/users-data/{record_id}` |
+| Ops (admin) | `GET /api/v1/admin/users-data` (full `users_data` table, each row joined with its `document_details`) |
+| Ops (admin) | `GET /api/v1/admin/users-data/{record_id}` (same join, single record) |
 | Ops (admin) | `GET /api/v1/admin/document-details` (full `document_details` table) |
 | Ops (admin) | `GET /api/v1/admin/document-details/{document_id}` |
 | Reports | `GET /api/v1/admin/reports/ageing` |

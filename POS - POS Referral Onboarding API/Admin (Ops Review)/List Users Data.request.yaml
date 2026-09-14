@@ -1,5 +1,5 @@
 $kind: http-request
-description: Full users_data table, paginated (default 50, max 200 per page).
+description: Full users_data table, paginated (default 50, max 200 per page). Each row includes its document_details (PAN/Aadhaar/bank), joined on users_data_id - null if that record hasn't saved any yet.
 url: "{{base_url}}/api/v1/admin/users-data?limit=50&offset=0"
 method: GET
 queryParams:

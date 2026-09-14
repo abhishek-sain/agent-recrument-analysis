@@ -1,5 +1,5 @@
 $kind: http-request
-description: Single users_data row by its id (e.g. TKT-12-09-2026-143059-7).
+description: Single users_data row by its id (e.g. TKT-12-09-2026-143059-7), including its document_details (PAN/Aadhaar/bank), joined on users_data_id - null if not saved yet.
 url: "{{base_url}}/api/v1/admin/users-data/{{record_id}}"
 method: GET
 order: 7000

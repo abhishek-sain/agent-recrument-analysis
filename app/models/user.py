@@ -2,7 +2,7 @@ import enum
 from datetime import datetime, date
 
 from sqlalchemy import String, DateTime, Date, func, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -87,3 +87,9 @@ class UsersData(Base):
     # user_type itself flips to POS on conversion, so this is the only
     # record of the fact that it used to be a referral.
     pos_conversion_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    # One document_details row per users_data record (see
+    # app.models.documents.DocumentDetails.users_data_id, unique FK).
+    document_details: Mapped["DocumentDetails | None"] = relationship(
+        "DocumentDetails", uselist=False, viewonly=True
+    )

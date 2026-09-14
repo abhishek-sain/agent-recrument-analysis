@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models.documents import DocumentDetails
 from app.models.user import UsersData
 from app.routers.deps import get_document_details_by_id, get_record_by_id
 from app.schemas.documents import DocumentDetailsResponse
-from app.schemas.onboarding import OnboardingRecordResponse
+from app.schemas.onboarding import UsersDataWithDocumentDetails
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-records"])
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1/admin", tags=["admin-records"])
 MAX_PAGE_SIZE = 200
 
 
-@router.get("/users-data", response_model=list[OnboardingRecordResponse])
+@router.get("/users-data", response_model=list[UsersDataWithDocumentDetails])
 def list_users_data(
     limit: int = Query(default=50, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(default=0, ge=0),
@@ -26,6 +26,7 @@ def list_users_data(
 ):
     return (
         db.query(UsersData)
+        .options(joinedload(UsersData.document_details))
         .order_by(UsersData.created_at.desc())
         .limit(limit)
         .offset(offset)
@@ -33,7 +34,7 @@ def list_users_data(
     )
 
 
-@router.get("/users-data/{record_id}", response_model=OnboardingRecordResponse)
+@router.get("/users-data/{record_id}", response_model=UsersDataWithDocumentDetails)
 def get_users_data(record: UsersData = Depends(get_record_by_id)):
     return record
 

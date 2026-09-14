@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import BaseModel
 
 from app.models.user import UserType, OnboardingStatus, ConsentStatus
+from app.schemas.documents import DocumentDetailsResponse
 
 
 class OnboardingFormUpdate(BaseModel):
@@ -53,6 +54,14 @@ class OnboardingRecordResponse(BaseModel):
     reviewed_by: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class UsersDataWithDocumentDetails(OnboardingRecordResponse):
+    """users_data + its document_details row, joined on users_data_id.
+    document_details is null if that record hasn't saved any PAN/Aadhaar/
+    bank details yet."""
+
+    document_details: DocumentDetailsResponse | None = None
 
 
 class SubmitResponse(BaseModel):
