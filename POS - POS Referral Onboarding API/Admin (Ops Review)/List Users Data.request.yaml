@@ -1,5 +1,12 @@
 $kind: http-request
-description: Full users_data table - every column, every record.
-url: "{{base_url}}/api/v1/admin/users-data"
+description: Full users_data table, paginated (default 50, max 200 per page).
+url: "{{base_url}}/api/v1/admin/users-data?limit=50&offset=0"
 method: GET
+queryParams:
+  - key: limit
+    value: "50"
+    description: Max rows to return (1-200).
+  - key: offset
+    value: "0"
+    description: Rows to skip, for paging.
 order: 6000

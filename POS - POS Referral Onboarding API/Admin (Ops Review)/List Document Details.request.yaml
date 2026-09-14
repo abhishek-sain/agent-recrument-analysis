@@ -1,5 +1,12 @@
 $kind: http-request
-description: Full document_details table - PAN/Aadhaar/Education structured fields for every record.
-url: "{{base_url}}/api/v1/admin/document-details"
+description: Full document_details table (PAN/Aadhaar/bank fields), paginated (default 50, max 200 per page).
+url: "{{base_url}}/api/v1/admin/document-details?limit=50&offset=0"
 method: GET
+queryParams:
+  - key: limit
+    value: "50"
+    description: Max rows to return (1-200).
+  - key: offset
+    value: "0"
+    description: Rows to skip, for paging.
 order: 8000

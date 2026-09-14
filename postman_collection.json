@@ -672,7 +672,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/admin/users-data",
+              "raw": "{{base_url}}/api/v1/admin/users-data?limit=50&offset=0",
               "host": [
                 "{{base_url}}"
               ],
@@ -681,6 +681,18 @@
                 "v1",
                 "admin",
                 "users-data"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Max rows to return (1-200)."
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Rows to skip, for paging."
+                }
               ]
             },
             "description": "Full users_data table - every column, every record."
@@ -713,7 +725,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/admin/document-details",
+              "raw": "{{base_url}}/api/v1/admin/document-details?limit=50&offset=0",
               "host": [
                 "{{base_url}}"
               ],
@@ -722,6 +734,18 @@
                 "v1",
                 "admin",
                 "document-details"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Max rows to return (1-200)."
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Rows to skip, for paging."
+                }
               ]
             },
             "description": "Full document_details table - PAN/Aadhaar/Education structured fields for every record."
