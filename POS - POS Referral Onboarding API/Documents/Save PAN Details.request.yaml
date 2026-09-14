@@ -8,10 +8,11 @@ body:
   type: text
   content: |-
     {
+      "age": 35,
       "pan_number": "ABCDE1234F",
       "pan_name": "RAMESH KUMAR",
       "pan_father_name": "SURESH KUMAR",
       "pan_dob": "1990-01-15",
-      "pan_gender": "M"
+      "updated_by": "OPS01"
     }
 order: 6000

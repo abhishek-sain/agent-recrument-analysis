@@ -7,8 +7,8 @@ from app.models.user import UsersData
 from app.routers.deps import get_record_by_token
 from app.schemas.documents import (
     AadhaarDetailsUpdate,
+    BankDetailsUpdate,
     DocumentUploadResponse,
-    EducationDetailsUpdate,
     PanDetailsUpdate,
 )
 from app.services.id_generator import SEQ_DOCUMENT_DETAILS, generate_id
@@ -76,9 +76,9 @@ def save_aadhaar_details(
     return {"message": "Aadhaar details saved"}
 
 
-@router.put("/{token}/documents/education-details")
-def save_education_details(
-    payload: EducationDetailsUpdate,
+@router.put("/{token}/documents/bank-details")
+def save_bank_details(
+    payload: BankDetailsUpdate,
     record: UsersData = Depends(get_record_by_token),
     db: Session = Depends(get_db),
 ):
@@ -86,4 +86,4 @@ def save_education_details(
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, field, value)
     db.commit()
-    return {"message": "Education details saved"}
+    return {"message": "Bank details saved"}

@@ -1,5 +1,5 @@
 $kind: http-request
-description: Writes into the same document_details row (Table-2) as Save PAN Details / Save Education Details.
+description: Writes into the same document_details row (Table-2) as Save PAN Details / Save Bank Details.
 url: "{{base_url}}/api/v1/onboarding/{{token}}/documents/aadhaar-details"
 method: PUT
 headers:
@@ -16,6 +16,7 @@ body:
       "aadhaar_city": "Pune",
       "aadhaar_district": "Pune",
       "aadhaar_state": "Maharashtra",
-      "aadhaar_pincode": "411001"
+      "aadhaar_pincode": "411001",
+      "updated_by": "OPS01"
     }
 order: 7000

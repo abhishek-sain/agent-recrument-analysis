@@ -1,6 +1,6 @@
 $kind: http-request
 description: Writes into the same document_details row (Table-2) as Save PAN Details / Save Aadhaar Details.
-url: "{{base_url}}/api/v1/onboarding/{{token}}/documents/education-details"
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents/bank-details"
 method: PUT
 headers:
   Content-Type: application/json
@@ -8,13 +8,10 @@ body:
   type: text
   content: |-
     {
-      "education_student_name": "Ramesh Kumar",
-      "qualification": "Bachelor's",
-      "course_name": "B.Com",
-      "institution_name": "Pune University College",
-      "university_board": "Savitribai Phule Pune University",
-      "passing_year": "2012",
-      "percentage": 72.5,
-      "result": "Pass"
+      "account_holder_name": "Ramesh Kumar",
+      "account_number": "123456789012",
+      "ifsc_code": "HDFC0001234",
+      "bank_name": "HDFC Bank",
+      "updated_by": "OPS01"
     }
 order: 8000
