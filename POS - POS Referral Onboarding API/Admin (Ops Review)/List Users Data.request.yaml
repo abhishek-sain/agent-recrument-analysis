@@ -1,0 +1,5 @@
+$kind: http-request
+description: Full users_data table - every column, every record.
+url: "{{base_url}}/api/v1/admin/users-data"
+method: GET
+order: 6000

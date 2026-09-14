@@ -3,6 +3,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.documents import DocumentDetails
 from app.models.user import UsersData
 
 
@@ -28,4 +29,11 @@ def get_record_by_id(record_id: str, db: Session = Depends(get_db)) -> UsersData
     record = db.query(UsersData).filter(UsersData.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Onboarding record not found")
+    return record
+
+
+def get_document_details_by_id(document_id: str, db: Session = Depends(get_db)) -> DocumentDetails:
+    record = db.query(DocumentDetails).filter(DocumentDetails.id == document_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Document details record not found")
     return record

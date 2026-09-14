@@ -1,0 +1,5 @@
+$kind: http-request
+description: Full document_details table - PAN/Aadhaar/Education structured fields for every record.
+url: "{{base_url}}/api/v1/admin/document-details"
+method: GET
+order: 8000

@@ -17,3 +17,4 @@ variables:
   base_url: http://localhost:8000
   token: ""
   record_id: ""
+  document_id: ""

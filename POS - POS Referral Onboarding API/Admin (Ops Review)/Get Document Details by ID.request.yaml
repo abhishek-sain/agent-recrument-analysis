@@ -1,0 +1,5 @@
+$kind: http-request
+description: Single document_details row by its own id (e.g. DOC-12-09-2026-143059-4), not users_data_id.
+url: "{{base_url}}/api/v1/admin/document-details/{{document_id}}"
+method: GET
+order: 9000
