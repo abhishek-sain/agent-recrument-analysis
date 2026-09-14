@@ -6,9 +6,26 @@
     "_postman_id": "pos-onboarding-api-collection"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "record_id", "value": "", "type": "string" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "record_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -19,7 +36,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
           }
         }
       ]
@@ -46,12 +71,28 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ramesh Kumar\",\n  \"number\": \"9876543210\",\n  \"user_type\": \"POS\",\n  \"raised_by\": \"SM001\"\n}"
+              "raw": "{\n  \"name\": \"Ramesh Kumar\",\n  \"number\": \"9876543210\",\n  \"email\": \"ramesh@example.com\",\n  \"user_type\": \"POS\",\n  \"raised_by\": \"SM001\"\n}"
             },
-            "url": { "raw": "{{base_url}}/api/v1/links/generate", "host": ["{{base_url}}"], "path": ["api", "v1", "links", "generate"] },
+            "url": {
+              "raw": "{{base_url}}/api/v1/links/generate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links",
+                "generate"
+              ]
+            },
             "description": "Called by the SM app after login. Creates the users_data row and returns a token + shareable URL (copy link / WhatsApp / SMS). user_type is POS or POS_REFERRAL."
           }
         },
@@ -62,8 +103,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/links/{{token}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "links", "{{token}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links",
+                "{{token}}"
+              ]
             },
             "description": "Called by the frontend's onboarding page on load to validate the token and fetch prefill data (name, number, user_type, status) before rendering the form."
           }
@@ -80,8 +128,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}"
+              ]
             }
           }
         },
@@ -89,15 +144,28 @@
           "name": "Save Form",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dob\": \"1990-01-15\",\n  \"email\": \"ramesh@example.com\",\n  \"city\": \"Pune\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"411001\",\n  \"consent\": \"AGREE\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/form",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "form"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "form"
+              ]
             },
             "description": "Upserts dob, email, city, state, pincode, consent. Same endpoint/body shape for both POS and POS Referral. Can be called multiple times. terms_and_conditions is NOT part of this payload - see 'Update Terms & Conditions' below."
           }
@@ -106,15 +174,28 @@
           "name": "Update Terms & Conditions",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"terms_and_conditions\": \"we can use your data for onboarding you\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/terms-and-conditions",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "terms-and-conditions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "terms-and-conditions"
+              ]
             },
             "description": "Edits ONLY terms_and_conditions, independently of Save Form. This field is fixed to 'we can use your data for onboarding you' when the record is created; this is the only way to change it afterward."
           }
@@ -126,8 +207,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/submit",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "submit"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "submit"
+              ]
             },
             "description": "Validates required fields/documents (name, number, consent, pan_card, aadhaar, photograph), runs a duplicate mobile-number check, and moves the record to UNDER_REVIEW."
           }
@@ -144,13 +233,32 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PAN_CARD",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
-              "query": [{ "key": "doc_type", "value": "PAN_CARD" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "PAN_CARD"
+                }
+              ]
             },
             "description": "doc_type options: PAN_CARD, AADHAAR, EDUCATIONAL_QUALIFICATION, PHOTOGRAPH, CANCELLED_CHEQUE - each writes the file URL to the matching users_data column."
           }
@@ -162,13 +270,32 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
-              "query": [{ "key": "doc_type", "value": "AADHAAR" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "AADHAAR"
+                }
+              ]
             }
           }
         },
@@ -179,13 +306,32 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PHOTOGRAPH",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
-              "query": [{ "key": "doc_type", "value": "PHOTOGRAPH" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "PHOTOGRAPH"
+                }
+              ]
             }
           }
         },
@@ -196,13 +342,32 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=CANCELLED_CHEQUE",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
-              "query": [{ "key": "doc_type", "value": "CANCELLED_CHEQUE" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "CANCELLED_CHEQUE"
+                }
+              ]
             }
           }
         },
@@ -213,13 +378,32 @@
             "header": [],
             "body": {
               "mode": "formdata",
-              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=EDUCATIONAL_QUALIFICATION",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents"],
-              "query": [{ "key": "doc_type", "value": "EDUCATIONAL_QUALIFICATION" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "EDUCATIONAL_QUALIFICATION"
+                }
+              ]
             }
           }
         },
@@ -227,15 +411,29 @@
           "name": "Save PAN Details",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pan_number\": \"ABCDE1234F\",\n  \"pan_name\": \"RAMESH KUMAR\",\n  \"pan_father_name\": \"SURESH KUMAR\",\n  \"pan_dob\": \"1990-01-15\",\n  \"pan_gender\": \"M\"\n}"
+              "raw": "{\n  \"age\": 35,\n  \"pan_number\": \"ABCDE1234F\",\n  \"pan_name\": \"RAMESH KUMAR\",\n  \"pan_father_name\": \"SURESH KUMAR\",\n  \"pan_dob\": \"1990-01-15\",\n  \"updated_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/pan-details",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "pan-details"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents",
+                "pan-details"
+              ]
             },
             "description": "Writes into the document_details table (Table-2), upserting the one row linked to this users_data record."
           }
@@ -244,32 +442,60 @@
           "name": "Save Aadhaar Details",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"aadhaar_number\": \"123456789012\",\n  \"aadhaar_name\": \"RAMESH KUMAR\",\n  \"aadhaar_dob\": \"1990-01-15\",\n  \"aadhaar_gender\": \"M\",\n  \"aadhaar_address\": \"12 MG Road, Pune\",\n  \"aadhaar_city\": \"Pune\",\n  \"aadhaar_district\": \"Pune\",\n  \"aadhaar_state\": \"Maharashtra\",\n  \"aadhaar_pincode\": \"411001\"\n}"
+              "raw": "{\n  \"aadhaar_number\": \"123456789012\",\n  \"aadhaar_name\": \"RAMESH KUMAR\",\n  \"aadhaar_dob\": \"1990-01-15\",\n  \"aadhaar_gender\": \"M\",\n  \"aadhaar_address\": \"12 MG Road, Pune\",\n  \"aadhaar_city\": \"Pune\",\n  \"aadhaar_district\": \"Pune\",\n  \"aadhaar_state\": \"Maharashtra\",\n  \"aadhaar_pincode\": \"411001\",\n  \"updated_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/aadhaar-details",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "aadhaar-details"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents",
+                "aadhaar-details"
+              ]
             },
             "description": "Writes into the same document_details row (Table-2) as Save PAN Details / Save Education Details."
           }
         },
         {
-          "name": "Save Education Details",
+          "name": "Save Bank Details",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"education_student_name\": \"Ramesh Kumar\",\n  \"qualification\": \"Bachelor's\",\n  \"course_name\": \"B.Com\",\n  \"institution_name\": \"Pune University College\",\n  \"university_board\": \"Savitribai Phule Pune University\",\n  \"passing_year\": \"2012\",\n  \"percentage\": 72.5,\n  \"result\": \"Pass\"\n}"
+              "raw": "{\n  \"account_holder_name\": \"Ramesh Kumar\",\n  \"account_number\": \"123456789012\",\n  \"ifsc_code\": \"HDFC0001234\",\n  \"bank_name\": \"HDFC Bank\",\n  \"updated_by\": \"OPS01\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/education-details",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "onboarding", "{{token}}", "documents", "education-details"]
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents/bank-details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents",
+                "bank-details"
+              ]
             },
             "description": "Writes into the same document_details row (Table-2) as Save PAN Details / Save Aadhaar Details."
           }
@@ -286,8 +512,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding?status=UNDER_REVIEW",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "onboarding"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -302,15 +535,29 @@
           "name": "Review - Approve",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"action\": \"APPROVE\",\n  \"reviewed_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
             },
             "description": "Approves and activates the record (status -> ACTIVE). Also stamps joining_date the first time this happens - this feeds the Ageing Report."
           }
@@ -319,15 +566,29 @@
           "name": "Review - Reject",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"action\": \"REJECT\",\n  \"reviewed_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
             }
           }
         },
@@ -347,15 +608,29 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"action\": \"SEND_BACK\",\n  \"reviewed_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "review"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
             },
             "description": "Rotates the onboarding token and returns a fresh new_onboarding_url to resend to the POS/Referral."
           }
@@ -364,17 +639,113 @@
           "name": "Convert to POS",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"converted_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/convert-to-pos",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "onboarding", "{{record_id}}", "convert-to-pos"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "convert-to-pos"
+              ]
             },
             "description": "Manually promotes an active POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ACTIVE. Stamps pos_conversion_date, which feeds the Ageing Report."
+          }
+        },
+        {
+          "name": "List Users Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/users-data",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users-data"
+              ]
+            },
+            "description": "Full users_data table - every column, every record."
+          }
+        },
+        {
+          "name": "Get Users Data by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/users-data/{{record_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users-data",
+                "{{record_id}}"
+              ]
+            },
+            "description": "Single users_data row by its id (e.g. TKT-12-09-2026-143059-7)."
+          }
+        },
+        {
+          "name": "List Document Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/document-details",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "document-details"
+              ]
+            },
+            "description": "Full document_details table - PAN/Aadhaar/Education structured fields for every record."
+          }
+        },
+        {
+          "name": "Get Document Details by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/document-details/{{document_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "document-details",
+                "{{document_id}}"
+              ]
+            },
+            "description": "Single document_details row by its own id (e.g. DOC-12-09-2026-143059-4), not users_data_id."
           }
         }
       ]
@@ -389,8 +760,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/reports/ageing",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "reports", "ageing"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reports",
+                "ageing"
+              ]
             },
             "description": "Date of Joining -> POS Referral -> POS Conversion Date. Lists every record that is currently a POS Referral (PENDING) or was converted from one (CONVERTED), with ageing_days and within_90_days (90 days is a target to measure against, not an enforced cutoff - referrals don't auto-expire or auto-convert)."
           }

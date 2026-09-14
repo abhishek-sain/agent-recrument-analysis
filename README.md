@@ -123,17 +123,15 @@ FastAPI serves live interactive docs automatically - no extra setup:
 - ReDoc: `<API_PUBLIC_URL>/redoc`
 - Raw schema: `<API_PUBLIC_URL>/openapi.json`
 
-On the live server (`https://grid.leadsgenerations.in/recrument-analysis`)
-that's `https://grid.leadsgenerations.in/recrument-analysis/docs`.
+On the live server (`https://pibspartners.com`) that's
+`https://pibspartners.com/docs`.
 
 The `servers` entry in the schema is driven by `API_PUBLIC_URL` in
 `.env` (defaults to the URL above) - that's what makes Swagger UI's "Try
 it out" send requests to the right host instead of wherever `/docs`
-itself is being viewed from. If your reverse proxy forwards
-`/recrument-analysis/*` to this app **without** stripping that prefix
-(i.e. the app itself sees `/recrument-analysis/...` in incoming
-requests), also set `ROOT_PATH=/recrument-analysis` in `.env` - otherwise
-leave it blank.
+itself is being viewed from. The app is served at the domain root (no
+path prefix), so `ROOT_PATH` is left blank; only set it if a reverse
+proxy later puts this app behind a stripped path prefix.
 
 A static copy of the schema is checked into the repo as
 [openapi.json](openapi.json) (importable into Postman, Swagger Editor,
@@ -174,12 +172,15 @@ endpoint (`APPROVE`/`REJECT`/`SEND_BACK`). `joining_date` and
 `pos_conversion_date` feed the Ageing Report - see below.
 
 **`document_details`** (Table-2) - one row per `users_data` record
-(`id` e.g. `DOC-12-09-2026-143059-4`, `users_data_id` FK), holding the
-PAN / Aadhaar / Education structured fields extracted from the uploaded
-documents (e.g. by an OCR step, or entered manually): `pan_number`,
-`pan_name`, ... `aadhaar_number`, `aadhaar_address`, ... `qualification`,
-`institution_name`, `percentage`, `cgpa`, ... (full field list in
-`app/models/documents.py`).
+(`id` e.g. `DOC-12-09-2026-143059-4`, `users_data_id` FK), holding
+PAN / Aadhaar structured fields extracted from the uploaded documents
+(e.g. by an OCR step, or entered manually) plus basic demographic and
+bank details: `age`, `pan_number`, `pan_name`, `pan_father_name`,
+`pan_dob`, `aadhaar_number`, `aadhaar_name`, `aadhaar_dob`,
+`aadhaar_gender`, `aadhaar_address`, `aadhaar_city`, `aadhaar_district`,
+`aadhaar_state`, `aadhaar_pincode`, `account_holder_name`,
+`account_number`, `ifsc_code`, `bank_name`, `created_at`, `updated_at`,
+`updated_by` (full field list in `app/models/documents.py`).
 
 ## Endpoints
 
@@ -194,10 +195,14 @@ documents (e.g. by an OCR step, or entered manually): `pan_number`,
 | Documents | `POST /api/v1/onboarding/{token}/documents?doc_type=...` (multipart file) |
 | Documents | `PUT /api/v1/onboarding/{token}/documents/pan-details` |
 | Documents | `PUT /api/v1/onboarding/{token}/documents/aadhaar-details` |
-| Documents | `PUT /api/v1/onboarding/{token}/documents/education-details` |
+| Documents | `PUT /api/v1/onboarding/{token}/documents/bank-details` |
 | Ops (admin) | `GET /api/v1/admin/onboarding?status=UNDER_REVIEW` |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/review` (`APPROVE` / `REJECT` / `SEND_BACK`) |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/convert-to-pos` |
+| Ops (admin) | `GET /api/v1/admin/users-data` (full `users_data` table) |
+| Ops (admin) | `GET /api/v1/admin/users-data/{record_id}` |
+| Ops (admin) | `GET /api/v1/admin/document-details` (full `document_details` table) |
+| Ops (admin) | `GET /api/v1/admin/document-details/{document_id}` |
 | Reports | `GET /api/v1/admin/reports/ageing` |
 
 ## Ageing Report

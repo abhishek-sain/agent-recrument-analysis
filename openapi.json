@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://grid.leadsgenerations.in/recrument-analysis",
+      "url": "https://pibspartners.com",
       "description": "Production"
     },
     {
@@ -451,13 +451,13 @@
         }
       }
     },
-    "/api/v1/onboarding/{token}/documents/education-details": {
+    "/api/v1/onboarding/{token}/documents/bank-details": {
       "put": {
         "tags": [
           "documents"
         ],
-        "summary": "Save Education Details",
-        "operationId": "save_education_details_api_v1_onboarding__token__documents_education_details_put",
+        "summary": "Save Bank Details",
+        "operationId": "save_bank_details_api_v1_onboarding__token__documents_bank_details_put",
         "parameters": [
           {
             "name": "token",
@@ -474,7 +474,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EducationDetailsUpdate"
+                "$ref": "#/components/schemas/BankDetailsUpdate"
               }
             }
           }
@@ -659,6 +659,140 @@
         }
       }
     },
+    "/api/v1/admin/users-data": {
+      "get": {
+        "tags": [
+          "admin-records"
+        ],
+        "summary": "List Users Data",
+        "operationId": "list_users_data_api_v1_admin_users_data_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OnboardingRecordResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Data Api V1 Admin Users Data Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users-data/{record_id}": {
+      "get": {
+        "tags": [
+          "admin-records"
+        ],
+        "summary": "Get Users Data",
+        "operationId": "get_users_data_api_v1_admin_users_data__record_id__get",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/document-details": {
+      "get": {
+        "tags": [
+          "admin-records"
+        ],
+        "summary": "List Document Details",
+        "operationId": "list_document_details_api_v1_admin_document_details_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentDetailsResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Document Details Api V1 Admin Document Details Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/document-details/{document_id}": {
+      "get": {
+        "tags": [
+          "admin-records"
+        ],
+        "summary": "Get Document Details",
+        "operationId": "get_document_details_api_v1_admin_document_details__document_id__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetailsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/reports/ageing": {
       "get": {
         "tags": [
@@ -740,17 +874,6 @@
             ],
             "title": "Aadhaar Dob"
           },
-          "aadhaar_yob": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Aadhaar Yob"
-          },
           "aadhaar_gender": {
             "anyOf": [
               {
@@ -816,6 +939,17 @@
               }
             ],
             "title": "Aadhaar Pincode"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
           }
         },
         "type": "object",
@@ -904,6 +1038,67 @@
         ],
         "title": "AgeingReportItem",
         "description": "One row of the Ageing Report: how long a POS Referral has been (or\nwas) a referral before converting to a POS.\n\nconversion_status:\n  - \"CONVERTED\": already promoted to POS - ageing_days is final.\n  - \"PENDING\": still an active POS Referral - ageing_days counts up\n    to today, and within_90_days tells you if the 90-day target has\n    already been missed."
+      },
+      "BankDetailsUpdate": {
+        "properties": {
+          "account_holder_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Holder Name"
+          },
+          "account_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Number"
+          },
+          "ifsc_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ifsc Code"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "type": "object",
+        "title": "BankDetailsUpdate"
       },
       "Body_upload_document_api_v1_onboarding__token__documents_post": {
         "properties": {
@@ -1000,6 +1195,247 @@
         ],
         "title": "ConvertToPosResponse"
       },
+      "DocumentDetailsResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "users_data_id": {
+            "type": "string",
+            "title": "Users Data Id"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "pan_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pan Number"
+          },
+          "pan_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pan Name"
+          },
+          "pan_father_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pan Father Name"
+          },
+          "pan_dob": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pan Dob"
+          },
+          "aadhaar_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Number"
+          },
+          "aadhaar_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Name"
+          },
+          "aadhaar_dob": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Dob"
+          },
+          "aadhaar_gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Gender"
+          },
+          "aadhaar_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Address"
+          },
+          "aadhaar_city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar City"
+          },
+          "aadhaar_district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar District"
+          },
+          "aadhaar_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar State"
+          },
+          "aadhaar_pincode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhaar Pincode"
+          },
+          "account_holder_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Holder Name"
+          },
+          "account_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Number"
+          },
+          "ifsc_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ifsc Code"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "users_data_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DocumentDetailsResponse"
+      },
       "DocumentType": {
         "type": "string",
         "enum": [
@@ -1029,244 +1465,6 @@
         ],
         "title": "DocumentUploadResponse"
       },
-      "EducationDetailsUpdate": {
-        "properties": {
-          "education_student_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Education Student Name"
-          },
-          "education_father_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Education Father Name"
-          },
-          "education_mother_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Education Mother Name"
-          },
-          "qualification": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Qualification"
-          },
-          "course_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Name"
-          },
-          "specialization": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Specialization"
-          },
-          "institution_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Institution Name"
-          },
-          "university_board": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "University Board"
-          },
-          "registration_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Registration Number"
-          },
-          "roll_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Roll Number"
-          },
-          "examination_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Examination Name"
-          },
-          "passing_year": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Passing Year"
-          },
-          "semester_year": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Semester Year"
-          },
-          "total_marks": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Marks"
-          },
-          "maximum_marks": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Maximum Marks"
-          },
-          "percentage": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Percentage"
-          },
-          "cgpa": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cgpa"
-          },
-          "grade": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grade"
-          },
-          "result": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Result"
-          },
-          "certificate_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Certificate Number"
-          },
-          "certificate_issue_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Certificate Issue Date"
-          }
-        },
-        "type": "object",
-        "title": "EducationDetailsUpdate"
-      },
       "GenerateLinkRequest": {
         "properties": {
           "name": {
@@ -1278,6 +1476,18 @@
             "type": "string",
             "maxLength": 15,
             "title": "Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "user_type": {
             "$ref": "#/components/schemas/UserType"
@@ -1713,6 +1923,17 @@
       },
       "PanDetailsUpdate": {
         "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
           "pan_number": {
             "anyOf": [
               {
@@ -1758,7 +1979,7 @@
             ],
             "title": "Pan Dob"
           },
-          "pan_gender": {
+          "updated_by": {
             "anyOf": [
               {
                 "type": "string"
@@ -1767,7 +1988,7 @@
                 "type": "null"
               }
             ],
-            "title": "Pan Gender"
+            "title": "Updated By"
           }
         },
         "type": "object",
