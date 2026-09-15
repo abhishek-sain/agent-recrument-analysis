@@ -83,7 +83,10 @@ class UsersData(Base):
 
     pan_card: Mapped[str | None] = mapped_column(String, nullable=True)
     educational_qualification: Mapped[str | None] = mapped_column(String, nullable=True)
-    aadhaar: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Aadhaar is 2 file slots (front/back of the card), not one - replaces
+    # the old single `aadhaar` column.
+    aadhar_front: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    aadhar_back: Mapped[str | None] = mapped_column(String(500), nullable=True)
     photograph: Mapped[str | None] = mapped_column(String, nullable=True)
     cancelled_cheque: Mapped[str | None] = mapped_column(String, nullable=True)
     passbook: Mapped[str | None] = mapped_column(String(500), nullable=True)

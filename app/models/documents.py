@@ -11,7 +11,8 @@ class DocumentType(str, enum.Enum):
     """Which users_data file column an uploaded file is stored against."""
 
     PAN_CARD = "PAN_CARD"
-    AADHAAR = "AADHAAR"
+    AADHAAR_FRONT = "AADHAAR_FRONT"
+    AADHAAR_BACK = "AADHAAR_BACK"
     EDUCATIONAL_QUALIFICATION = "EDUCATIONAL_QUALIFICATION"
     PHOTOGRAPH = "PHOTOGRAPH"
     CANCELLED_CHEQUE = "CANCELLED_CHEQUE"

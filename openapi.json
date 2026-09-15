@@ -1553,7 +1553,8 @@
         "type": "string",
         "enum": [
           "PAN_CARD",
-          "AADHAAR",
+          "AADHAAR_FRONT",
+          "AADHAAR_BACK",
           "EDUCATIONAL_QUALIFICATION",
           "PHOTOGRAPH",
           "CANCELLED_CHEQUE",
@@ -1986,7 +1987,7 @@
             ],
             "title": "Educational Qualification"
           },
-          "aadhaar": {
+          "aadhar_front": {
             "anyOf": [
               {
                 "type": "string"
@@ -1995,7 +1996,18 @@
                 "type": "null"
               }
             ],
-            "title": "Aadhaar"
+            "title": "Aadhar Front"
+          },
+          "aadhar_back": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhar Back"
           },
           "photograph": {
             "anyOf": [
@@ -2397,7 +2409,7 @@
             ],
             "title": "Educational Qualification"
           },
-          "aadhaar": {
+          "aadhar_front": {
             "anyOf": [
               {
                 "type": "string"
@@ -2406,7 +2418,18 @@
                 "type": "null"
               }
             ],
-            "title": "Aadhaar"
+            "title": "Aadhar Front"
+          },
+          "aadhar_back": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aadhar Back"
           },
           "photograph": {
             "anyOf": [

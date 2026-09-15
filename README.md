@@ -233,8 +233,9 @@ Employee: `id` (ticket id, e.g. `TKT-12-09-2026-143059-7`), `name`,
 `onboarding_link` (the full URL, e.g. `http://.../onboard/pos/nO5Z-...` -
 for `EMPLOYEE` this is stored but never shared, see "BQP Employee"
 above), `dob`, `email`, `city`, `state`, `pincode`, `pan_card`,
-`educational_qualification`, `aadhaar`, `photograph`,
-`cancelled_cheque`, `passbook` (all six as S3/file URLs),
+`educational_qualification`, `aadhar_front`, `aadhar_back`,
+`photograph`, `cancelled_cheque`, `passbook` (all seven as S3/file
+URLs - Aadhaar is 2 separate file slots, front and back of the card),
 `terms_and_conditions`, `consent`, `raised_by`, `status` (see "Status
 pipeline" above), `created_at`, `updated_at`, `updated_by`,
 `reviewed_by`, `joining_date`, `pos_conversion_date`.

@@ -312,7 +312,7 @@
           }
         },
         {
-          "name": "Upload Document - AADHAAR",
+          "name": "Upload Document - AADHAAR_FRONT",
           "request": {
             "method": "POST",
             "header": [],
@@ -327,7 +327,7 @@
               ]
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR",
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR_FRONT",
               "host": [
                 "{{base_url}}"
               ],
@@ -341,7 +341,43 @@
               "query": [
                 {
                   "key": "doc_type",
-                  "value": "AADHAAR"
+                  "value": "AADHAAR_FRONT"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Document - AADHAAR_BACK",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR_BACK",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "AADHAAR_BACK"
                 }
               ]
             }

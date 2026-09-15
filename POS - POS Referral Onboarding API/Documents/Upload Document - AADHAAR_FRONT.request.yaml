@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=AADHAAR_FRONT"
+method: POST
+queryParams:
+  doc_type: AADHAAR_FRONT
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: []
+order: 2000

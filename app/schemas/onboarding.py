@@ -43,7 +43,8 @@ class OnboardingRecordResponse(BaseModel):
 
     pan_card: str | None = None
     educational_qualification: str | None = None
-    aadhaar: str | None = None
+    aadhar_front: str | None = None
+    aadhar_back: str | None = None
     photograph: str | None = None
     cancelled_cheque: str | None = None
     passbook: str | None = None

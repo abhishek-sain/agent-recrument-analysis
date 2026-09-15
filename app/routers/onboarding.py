@@ -77,7 +77,7 @@ def update_terms_and_conditions(
 # required for EMPLOYEE, whose flow (per spec) is name/number/email +
 # documents only.
 REQUIRED_FORM_FIELDS = ["dob", "city", "state", "pincode"]
-REQUIRED_DOCS = ["pan_card", "educational_qualification", "aadhaar", "photograph", "cancelled_cheque"]
+REQUIRED_DOCS = ["pan_card", "educational_qualification", "aadhar_front", "aadhar_back", "photograph", "cancelled_cheque"]
 
 
 def _missing_fields(record: UsersData) -> list[str]:

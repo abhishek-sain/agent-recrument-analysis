@@ -9,7 +9,6 @@ request:
     content: |-
       {
         "dob": "1990-01-15",
-        "email": "ramesh@example.com",
         "city": "Pune",
         "state": "Maharashtra",
         "pincode": "411001",
@@ -37,9 +36,11 @@ response:
         "pincode": "411001",
         "pan_card": null,
         "educational_qualification": null,
-        "aadhaar": null,
+        "aadhar_front": null,
+        "aadhar_back": null,
         "photograph": null,
         "cancelled_cheque": null,
+        "passbook": null,
         "terms_and_conditions": "we can use your data for onboarding you",
         "consent": "AGREE",
         "created_at": "2026-09-12T14:30:59Z",

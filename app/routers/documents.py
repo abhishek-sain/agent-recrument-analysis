@@ -18,7 +18,8 @@ router = APIRouter(prefix="/api/v1/onboarding", tags=["documents"])
 
 DOC_FIELD_MAP = {
     DocumentType.PAN_CARD: "pan_card",
-    DocumentType.AADHAAR: "aadhaar",
+    DocumentType.AADHAAR_FRONT: "aadhar_front",
+    DocumentType.AADHAAR_BACK: "aadhar_back",
     DocumentType.EDUCATIONAL_QUALIFICATION: "educational_qualification",
     DocumentType.PHOTOGRAPH: "photograph",
     DocumentType.CANCELLED_CHEQUE: "cancelled_cheque",
