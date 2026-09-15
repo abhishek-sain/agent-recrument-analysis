@@ -1,4 +1,3 @@
-import enum
 from datetime import date, datetime
 
 from pydantic import BaseModel
@@ -6,14 +5,16 @@ from pydantic import BaseModel
 from app.models.user import OnboardingStatus, UserType
 
 
-class ReviewAction(str, enum.Enum):
-    APPROVE = "APPROVE"
-    REJECT = "REJECT"
-    SEND_BACK = "SEND_BACK"
-
-
 class ReviewRequest(BaseModel):
-    action: ReviewAction
+    """
+    next_status must be the immediate next stage in the pipeline
+    (see app.routers.workflow.PIPELINE_ORDER) - e.g. from UNDER_REVIEW
+    you may only move to UNDER_TRAINING, REJECTED, or SEND_BACK; no
+    skipping stages. REJECTED/SEND_BACK are only legal while the record
+    is at UNDER_REVIEW (the eligibility-check stage).
+    """
+
+    next_status: OnboardingStatus
     reviewed_by: str
 
 

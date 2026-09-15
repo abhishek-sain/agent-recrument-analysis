@@ -8,13 +8,15 @@ from app.schemas.documents import DocumentDetailsResponse
 
 class OnboardingFormUpdate(BaseModel):
     """
-    Partial/upsert payload for the fields users_data actually has.
-    terms_and_conditions is NOT editable here - it's a fixed value set at
-    creation, editable only via PUT .../terms-and-conditions.
+    Partial/upsert payload for the fields the user fills in themselves.
+    name/number/email/user_type are set at link-generation (or, for a
+    BQP Employee, at POST /api/v1/employees/onboard) and are NOT
+    editable here - pre-filled and locked per spec. terms_and_conditions
+    is also NOT editable here - fixed at creation, editable only via
+    PUT .../terms-and-conditions.
     """
 
     dob: date | None = None
-    email: str | None = None
     city: str | None = None
     state: str | None = None
     pincode: str | None = None

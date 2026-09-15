@@ -1,5 +1,5 @@
 $kind: http-request
-description: Only legal from UNDER_REVIEW (eligibility check failed). Terminal.
+description: UNDER_TRAINING -> ONBOARDED. Stamps joining_date the first time this happens (feeds the Ageing Report). This also unlocks POS Referral -> POS conversion.
 url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
 method: POST
 headers:
@@ -8,7 +8,7 @@ body:
   type: text
   content: |-
     {
-      "next_status": "REJECTED",
+      "next_status": "ONBOARDED",
       "reviewed_by": "OPS01"
     }
-order: 2500
+order: 2200

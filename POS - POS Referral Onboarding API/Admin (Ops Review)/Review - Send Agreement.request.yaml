@@ -1,5 +1,5 @@
 $kind: http-request
-description: Only legal from UNDER_REVIEW (eligibility check failed). Terminal.
+description: ONBOARDED -> AGREEMENT.
 url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
 method: POST
 headers:
@@ -8,7 +8,7 @@ body:
   type: text
   content: |-
     {
-      "next_status": "REJECTED",
+      "next_status": "AGREEMENT",
       "reviewed_by": "OPS01"
     }
-order: 2500
+order: 2300

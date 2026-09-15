@@ -10,7 +10,6 @@ from app.schemas.workflow import (
     ConvertToPosRequest,
     ConvertToPosResponse,
     OnboardingListItem,
-    ReviewAction,
     ReviewRequest,
     ReviewResponse,
 )
@@ -21,6 +20,23 @@ router = APIRouter(prefix="/api/v1/admin/onboarding", tags=["admin"])
 # NOTE: these endpoints assume they sit behind your existing SM/Ops
 # authentication & role-based access middleware - no auth is implemented
 # here per your instructions.
+
+# The forward path every record walks once OPS starts working it. Same
+# pipeline for POS / POS Referral / Employee.
+PIPELINE_ORDER = [
+    OnboardingStatus.SUBMITTED,
+    OnboardingStatus.UNDER_REVIEW,
+    OnboardingStatus.UNDER_TRAINING,
+    OnboardingStatus.ONBOARDED,
+    OnboardingStatus.AGREEMENT,
+    OnboardingStatus.WELCOME_MESSAGE,
+]
+
+# REJECTED/SEND_BACK are only legal exits from the eligibility-check
+# stage (UNDER_REVIEW) - matches the original approve/reject/send-back
+# behaviour, just generalized past a single review step.
+EXIT_STATUSES = {OnboardingStatus.REJECTED, OnboardingStatus.SEND_BACK}
+EXIT_ALLOWED_FROM = OnboardingStatus.UNDER_REVIEW
 
 
 @router.get("", response_model=list[OnboardingListItem])
@@ -40,34 +56,52 @@ def review_onboarding(
     record: UsersData = Depends(get_record_by_id),
     db: Session = Depends(get_db),
 ):
-    if record.status != OnboardingStatus.UNDER_REVIEW:
-        raise HTTPException(status_code=409, detail=f"Record is in status {record.status.value}, not eligible for review")
+    """
+    Moves a record one step through the OPS pipeline:
+    SUBMITTED -> UNDER_REVIEW -> UNDER_TRAINING -> ONBOARDED -> AGREEMENT
+    -> WELCOME_MESSAGE, no skipping. REJECTED/SEND_BACK are only legal
+    while at UNDER_REVIEW (eligibility check).
+    """
+    next_status = payload.next_status
+
+    if next_status in EXIT_STATUSES:
+        if record.status != EXIT_ALLOWED_FROM:
+            raise HTTPException(
+                status_code=409,
+                detail=f"{next_status.value} is only allowed from {EXIT_ALLOWED_FROM.value}, record is {record.status.value}",
+            )
+    else:
+        if record.status not in PIPELINE_ORDER or next_status not in PIPELINE_ORDER:
+            raise HTTPException(status_code=409, detail=f"Cannot move from {record.status.value} to {next_status.value}")
+        current_index = PIPELINE_ORDER.index(record.status)
+        target_index = PIPELINE_ORDER.index(next_status)
+        if target_index != current_index + 1:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Cannot skip stages: from {record.status.value} the only valid next status is "
+                f"{PIPELINE_ORDER[current_index + 1].value if current_index + 1 < len(PIPELINE_ORDER) else 'none'}",
+            )
 
     new_onboarding_url = None
+    message = f"Moved to {next_status.value}"
 
-    if payload.action == ReviewAction.APPROVE:
-        record.status = OnboardingStatus.ACTIVE  # activation is immediate once approved
-        if record.joining_date is None:
-            record.joining_date = date.today()
+    if next_status == OnboardingStatus.ONBOARDED and record.joining_date is None:
+        record.joining_date = date.today()
 
-    elif payload.action == ReviewAction.REJECT:
-        record.status = OnboardingStatus.REJECTED
-
-    elif payload.action == ReviewAction.SEND_BACK:
-        record.status = OnboardingStatus.SEND_BACK
-        # issue a fresh link so the POS/Referral can update and resubmit
+    if next_status == OnboardingStatus.SEND_BACK:
+        # issue a fresh link/token so the POS/Referral/Employee can
+        # update and resubmit; also re-opens the form (see
+        # onboarding.LOCKED_STATUSES, which excludes SEND_BACK).
         new_onboarding_url = build_onboarding_url(record.user_type, generate_token())
         record.onboarding_link = new_onboarding_url
+        message = "Sent back for corrections, new link/token issued"
+    elif next_status == OnboardingStatus.REJECTED:
+        message = "Rejected"
 
+    record.status = next_status
     record.reviewed_by = payload.reviewed_by
     record.updated_by = payload.reviewed_by
     db.commit()
-
-    message = {
-        ReviewAction.APPROVE: "Approved and activated",
-        ReviewAction.REJECT: "Rejected",
-        ReviewAction.SEND_BACK: "Sent back for corrections, new link issued",
-    }[payload.action]
 
     return ReviewResponse(
         status=record.status,
@@ -83,14 +117,15 @@ def convert_to_pos(
     db: Session = Depends(get_db),
 ):
     """
-    Manually promotes an active POS Referral to a full POS. Feeds the
-    Ageing Report: joining_date (set on approval) and pos_conversion_date
-    (set here) together give the "how long were they a referral" duration.
+    Manually promotes an onboarded POS Referral to a full POS. Feeds the
+    Ageing Report: joining_date (set on first reaching ONBOARDED) and
+    pos_conversion_date (set here) together give the "how long were they
+    a referral" duration.
     """
     if record.user_type != UserType.POS_REFERRAL:
         raise HTTPException(status_code=409, detail="Only a POS_REFERRAL record can be converted to POS")
-    if record.status != OnboardingStatus.ACTIVE:
-        raise HTTPException(status_code=409, detail=f"Record is in status {record.status.value}, must be ACTIVE to convert")
+    if record.status != OnboardingStatus.ONBOARDED:
+        raise HTTPException(status_code=409, detail=f"Record is in status {record.status.value}, must be ONBOARDED to convert")
 
     record.user_type = UserType.POS
     record.pos_conversion_date = date.today()

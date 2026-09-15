@@ -10,17 +10,43 @@ from app.database import Base
 class UserType(str, enum.Enum):
     POS = "POS"
     POS_REFERRAL = "POS_REFERRAL"
+    EMPLOYEE = "EMPLOYEE"  # BQP employee - no link-generation step, see app.routers.employees
 
 
 class OnboardingStatus(str, enum.Enum):
+    """
+    Pipeline (POS / POS Referral / BQP Employee all share it once a
+    record exists):
+
+      LINK_GENERATED (POS/Referral only - set at link creation, an
+      Employee record starts at FORM_IN_PROGRESS since there's no link)
+        -> FORM_IN_PROGRESS (first form save)
+        -> SUBMITTED (user submits)
+        -> UNDER_REVIEW (OPS starts the eligibility check)
+        -> UNDER_TRAINING
+        -> ONBOARDED (joining_date is stamped here - see UsersData.joining_date)
+        -> AGREEMENT
+        -> WELCOME_MESSAGE
+
+    REJECTED / SEND_BACK are the only exits, and only from UNDER_REVIEW
+    (eligibility check failed). SEND_BACK rotates the token and unlocks
+    the form for corrections; REJECTED is terminal.
+
+    OPS drives every UNDER_REVIEW -> ... -> WELCOME_MESSAGE transition
+    explicitly via POST /api/v1/admin/onboarding/{id}/review - see
+    app.routers.workflow.PIPELINE_ORDER.
+    """
+
     LINK_GENERATED = "LINK_GENERATED"
     FORM_IN_PROGRESS = "FORM_IN_PROGRESS"
     SUBMITTED = "SUBMITTED"
     UNDER_REVIEW = "UNDER_REVIEW"
+    UNDER_TRAINING = "UNDER_TRAINING"
+    ONBOARDED = "ONBOARDED"
+    AGREEMENT = "AGREEMENT"
+    WELCOME_MESSAGE = "WELCOME_MESSAGE"
     SEND_BACK = "SEND_BACK"
     REJECTED = "REJECTED"
-    APPROVED = "APPROVED"
-    ACTIVE = "ACTIVE"
 
 
 class ConsentStatus(str, enum.Enum):
@@ -80,8 +106,8 @@ class UsersData(Base):
     reviewed_by: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # --- Ageing Report support ---
-    # Date the record was approved/activated (set once, when status first
-    # becomes ACTIVE). This is "Date of Joining" for the Ageing Report.
+    # Date the record was onboarded (set once, when status first becomes
+    # ONBOARDED). This is "Date of Joining" for the Ageing Report.
     joining_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     # Set only when a POS_REFERRAL is manually converted to POS. Its
     # presence is what marks a record as "converted" in the Ageing Report -

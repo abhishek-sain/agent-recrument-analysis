@@ -25,8 +25,15 @@ class GenerateLinkResponse(BaseModel):
 
 
 class LinkPrefillResponse(BaseModel):
+    """
+    What the frontend pre-fills, non-editable, when the POS/Referral
+    opens their link - name/number/email/user_type are locked in at
+    link-generation time; everything else is filled in by the user.
+    """
+
     id: str
     name: str
     number: str
+    email: str | None = None
     user_type: UserType
     status: OnboardingStatus

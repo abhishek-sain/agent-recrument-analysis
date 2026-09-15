@@ -1,8 +1,10 @@
 # POS / POS Referral Onboarding API
 
-FastAPI backend for the digital onboarding flow described in the process
-diagrams: link generation by an SM, self-onboarding for POS / POS
-Referral, document upload, and an ops approval workflow.
+FastAPI backend for the digital onboarding flow covering three user
+types: **POS** and **POS Referral** (SM raises a link, the user
+self-onboards through it) and **BQP Employee** (no link - the employee
+fills the form directly). Document upload and the ops
+review/status-pipeline workflow are shared by all three.
 
 **Exactly 2 database tables** - `users_data` (Table-1) and
 `document_details` (Table-2: PAN/Aadhaar/Education extracted fields),
@@ -13,13 +15,53 @@ system. The admin/ops endpoints assume a caller identity (`raised_by`,
 `reviewed_by`, etc.) is passed in from whatever your existing auth
 middleware resolves.
 
-## How link generation & frontend rendering work
+## Status pipeline
+
+Every `users_data` record (all 3 user types) walks the same pipeline
+once it exists:
+
+```
+LINK_GENERATED (POS/Referral only)
+      |
+      v
+FORM_IN_PROGRESS  --(user fills the form)
+      |
+      v
+   SUBMITTED      --(POST .../onboarding/{token}/submit)
+      |
+      v
+ UNDER_REVIEW      --(OPS: eligibility check) --REJECTED (terminal)
+      |                                       --SEND_BACK (rotates token, re-opens form)
+      v
+UNDER_TRAINING
+      |
+      v
+  ONBOARDED        --(joining_date stamped here; unlocks POS Referral -> POS conversion)
+      |
+      v
+  AGREEMENT
+      |
+      v
+WELCOME_MESSAGE
+```
+
+A **BQP Employee** record starts at `FORM_IN_PROGRESS` directly (there's
+no link, so no `LINK_GENERATED` stage) and joins the same pipeline from
+`SUBMITTED` onward.
+
+OPS drives every step from `UNDER_REVIEW` onward explicitly, one call
+at a time, via `POST /api/v1/admin/onboarding/{id}/review` with
+`{"next_status": "...", "reviewed_by": "..."}` - only the immediate next
+stage is accepted (no skipping). `REJECTED`/`SEND_BACK` are only legal
+while the record is at `UNDER_REVIEW`.
+
+## POS / POS Referral: link generation & frontend rendering
 
 This backend is API-only - it never renders HTML. The "link" is just a
 URL that points at a route your **frontend** app owns, carrying an
 opaque token as the sole handle back to this API.
 
-1. SM calls `POST /api/v1/links/generate` with `{name, number, user_type, raised_by}`.
+1. SM calls `POST /api/v1/links/generate` with `{name, number, email, user_type, raised_by}` (`user_type` must be `POS` or `POS_REFERRAL` - `EMPLOYEE` is rejected here, see the BQP Employee section below).
 2. The backend creates a `users_data` row - `id` is a generated ticket id
    like `TKT-12-09-2026-143059-7` (see "Id format" below), and a random
    token (`secrets.token_urlsafe(32)`, unguessable) is generated and
@@ -39,7 +81,10 @@ opaque token as the sole handle back to this API.
    `/onboard/:userType/:token`. When the POS/Referral opens the link:
    - The page reads `token` from the URL.
    - Calls `GET /api/v1/links/{token}` to validate it and fetch prefill
-     data (`name`, `number`, `user_type`, `status`).
+     data (`name`, `number`, `email`, `user_type`, `status`) - these four
+     fields are set at link-generation time and rendered **read-only**;
+     the user only fills in what's left (DOB, city, state, pincode,
+     documents, consent - see `OnboardingFormUpdate`).
    - Renders the form based on `user_type`.
    - From then on, every API call in the flow (`onboarding/{token}/form`,
      `onboarding/{token}/documents`, `onboarding/{token}/submit`) is made
@@ -47,9 +92,10 @@ opaque token as the sole handle back to this API.
      POS/Referral side, the token itself is the access credential to
      that one record.
 5. If ops sends the record back for corrections
-   (`POST /api/v1/admin/onboarding/{id}/review` with `action: SEND_BACK`),
-   the backend **rotates the token** and returns a fresh
-   `new_onboarding_url`, which you resend to the POS/Referral the same way.
+   (`POST /api/v1/admin/onboarding/{id}/review` with `next_status: SEND_BACK`,
+   only legal while `status=UNDER_REVIEW`), the backend **rotates the
+   token** and returns a fresh `new_onboarding_url`, which you resend to
+   the POS/Referral the same way.
 
 So: this backend never "renders" anything - it is the data/validation
 layer behind a frontend route the frontend team controls. `FRONTEND_BASE_URL`
@@ -60,6 +106,32 @@ appears in the frontend URL), even though `onboarding_link` in the
 database stores the full URL - the backend matches records by the
 trailing token portion of that stored URL (see
 `app/routers/deps.py:get_record_by_token`).
+
+## BQP Employee: no link generation
+
+BQP employees skip the SM/link step entirely:
+
+1. `POST /api/v1/employees/onboard` with `{name, number, email, raised_by}`
+   (`raised_by` is the employee code of whoever is raising the request).
+   `user_type` is not a request field - it's forced to `EMPLOYEE` server-side.
+2. The backend creates the `users_data` row exactly like the POS/Referral
+   flow (ticket id, token, `onboarding_link` stored internally for
+   consistency with `get_record_by_token`), but starts it at
+   `FORM_IN_PROGRESS` and returns just `{id, token}` - **no**
+   `onboarding_url`/share links, since nothing is ever shared as a link.
+3. The employee's own client holds onto that `token` and drives the
+   **same** endpoints as POS/Referral: `PUT .../onboarding/{token}/form`,
+   `POST .../onboarding/{token}/documents`, `PUT .../documents/{pan,aadhaar,bank}-details`,
+   `POST .../onboarding/{token}/submit`.
+4. **Document data extraction is out of scope here** - a separate
+   document-processing service (owned by another developer) extracts
+   PAN/Aadhaar/bank fields from the uploaded documents and writes them
+   via the same `PUT .../documents/{pan,aadhaar,bank}-details` endpoints
+   this API already exposes. Nothing extra was built for that; those
+   endpoints are generic enough to be called by that service directly
+   instead of (or in addition to) manual entry.
+5. From `SUBMITTED` onward, OPS runs the exact same review pipeline as
+   POS/Referral (see "Status pipeline" above).
 
 ## Project layout
 
@@ -72,10 +144,12 @@ app/
   schemas/          Pydantic request/response models
   services/         token generation, id generation (TKT-.../DOC-...), storage (local/S3)
   routers/
-    links.py        SM: generate link. Frontend: resolve token -> prefill
+    links.py         SM: generate link (POS/Referral only). Frontend: resolve token -> prefill
+    employees.py     BQP Employee: direct onboarding, no link
     onboarding.py    save form, submit
-    documents.py     file upload + PAN/Aadhaar/Education structured detail save
-    workflow.py      ops: list/review (approve/reject/send-back)
+    documents.py     file upload + PAN/Aadhaar/bank structured detail save
+    workflow.py      ops: list/review (status pipeline), convert-to-pos
+    records.py       ops: full users_data/document_details table dumps
 alembic/                    migrations (autogenerate against the models above)
 scripts/init_db.py          quick `create_all()` for local dev without migrations
 scripts/export_openapi.py   exports the live OpenAPI/Swagger schema to openapi.json
@@ -153,23 +227,25 @@ afterward.
 
 ## Data model
 
-**`users_data`** (Table-1) - one row per POS / POS Referral: `id`
-(ticket id, e.g. `TKT-12-09-2026-143059-7`), `name`, `number`,
-`user_type`, `onboarding_link` (the full shareable URL, e.g.
-`http://.../onboard/pos/nO5Z-...`), `dob`, `email`, `city`,
-`state`, `pincode`, `pan_card`, `educational_qualification`, `aadhaar`,
-`photograph`, `cancelled_cheque`, `passbook` (all six as S3/file URLs),
-`terms_and_conditions`, `consent`, `raised_by`, `status`, `created_at`,
-`updated_at`, `updated_by`, `reviewed_by`, `joining_date`,
-`pos_conversion_date`.
+**`users_data`** (Table-1) - one row per POS / POS Referral / BQP
+Employee: `id` (ticket id, e.g. `TKT-12-09-2026-143059-7`), `name`,
+`number`, `user_type` (`POS` / `POS_REFERRAL` / `EMPLOYEE`),
+`onboarding_link` (the full URL, e.g. `http://.../onboard/pos/nO5Z-...` -
+for `EMPLOYEE` this is stored but never shared, see "BQP Employee"
+above), `dob`, `email`, `city`, `state`, `pincode`, `pan_card`,
+`educational_qualification`, `aadhaar`, `photograph`,
+`cancelled_cheque`, `passbook` (all six as S3/file URLs),
+`terms_and_conditions`, `consent`, `raised_by`, `status` (see "Status
+pipeline" above), `created_at`, `updated_at`, `updated_by`,
+`reviewed_by`, `joining_date`, `pos_conversion_date`.
 
 `terms_and_conditions` is fixed at creation to
 `"we can use your data for onboarding you"` and is **not** part of the
 general form-save payload - it has its own endpoint (see below) so it
 can be changed independently of everything else on the record.
 `reviewed_by` is set automatically to whoever calls the admin review
-endpoint (`APPROVE`/`REJECT`/`SEND_BACK`). `joining_date` and
-`pos_conversion_date` feed the Ageing Report - see below.
+endpoint. `joining_date` and `pos_conversion_date` feed the Ageing
+Report - see below.
 
 **`document_details`** (Table-2) - one row per `users_data` record
 (`id` e.g. `DOC-12-09-2026-143059-4`, `users_data_id` FK), holding
@@ -186,8 +262,9 @@ bank details: `age`, `pan_number`, `pan_name`, `pan_father_name`,
 
 | Area | Method & Path |
 |---|---|
-| Link | `POST /api/v1/links/generate` |
+| Link | `POST /api/v1/links/generate` (POS/Referral only) |
 | Link | `GET /api/v1/links/{token}` |
+| Employee | `POST /api/v1/employees/onboard` (BQP, no link) |
 | Onboarding | `GET /api/v1/onboarding/{token}` |
 | Onboarding | `PUT /api/v1/onboarding/{token}/form` |
 | Onboarding | `PUT /api/v1/onboarding/{token}/terms-and-conditions` |
@@ -196,8 +273,8 @@ bank details: `age`, `pan_number`, `pan_name`, `pan_father_name`,
 | Documents | `PUT /api/v1/onboarding/{token}/documents/pan-details` |
 | Documents | `PUT /api/v1/onboarding/{token}/documents/aadhaar-details` |
 | Documents | `PUT /api/v1/onboarding/{token}/documents/bank-details` |
-| Ops (admin) | `GET /api/v1/admin/onboarding?status=UNDER_REVIEW` |
-| Ops (admin) | `POST /api/v1/admin/onboarding/{id}/review` (`APPROVE` / `REJECT` / `SEND_BACK`) |
+| Ops (admin) | `GET /api/v1/admin/onboarding?status=...` |
+| Ops (admin) | `POST /api/v1/admin/onboarding/{id}/review` (`{next_status, reviewed_by}` - one pipeline step at a time) |
 | Ops (admin) | `POST /api/v1/admin/onboarding/{id}/convert-to-pos` |
 | Ops (admin) | `GET /api/v1/admin/users-data` (full `users_data` table, each row joined with its `document_details`) |
 | Ops (admin) | `GET /api/v1/admin/users-data/{record_id}` (same join, single record) |
@@ -211,11 +288,11 @@ Tracks how long a POS Referral stays a referral before being promoted
 to a full POS: **Date of Joining → POS Referral → POS Conversion Date**.
 
 - `joining_date` is stamped automatically the first time a record's
-  status becomes `ACTIVE` (i.e. when ops approves it) - this is "Date of
-  Joining" for both POS and POS Referral records.
+  status becomes `ONBOARDED` - this is "Date of Joining" for both POS
+  and POS Referral records.
 - Conversion is a manual ops action, not automatic:
   `POST /api/v1/admin/onboarding/{id}/convert-to-pos` (only works on a
-  record that is currently `user_type=POS_REFERRAL` and `status=ACTIVE`)
+  record that is currently `user_type=POS_REFERRAL` and `status=ONBOARDED`)
   flips `user_type` to `POS` and stamps `pos_conversion_date`.
 - `GET /api/v1/admin/reports/ageing` lists every record that either is
   currently a POS Referral or was converted from one, with:
@@ -231,14 +308,17 @@ to a full POS: **Date of Joining → POS Referral → POS Conversion Date**.
 - **File storage** defaults to local disk (`app/services/storage.py`),
   served back at `/files/...`. Set `STORAGE_BACKEND=s3` + AWS env vars to
   switch to S3 with no route changes.
-- **PAN/Aadhaar/Education structured fields** (Table-2) are exposed as
-  plain save endpoints - if you add an OCR step later, point it at the
-  same `PUT .../pan-details` etc. endpoints.
-- **Approval workflow** is a single-step approve here (`UNDER_REVIEW` ->
-  `ACTIVE`). There is no audit-history table and no generated POS ID in
-  this schema - if you need either later, they'd be additional
-  tables/columns beyond the 2-table spec this project currently follows.
+- **PAN/Aadhaar/bank structured fields** (Table-2) are exposed as plain
+  save endpoints - the BQP document-processing service (or an OCR step
+  for POS/Referral) points at the same `PUT .../pan-details` etc.
+  endpoints; nothing else was built for that integration.
+- **Review pipeline** is multi-step (`SUBMITTED` -> `UNDER_REVIEW` ->
+  `UNDER_TRAINING` -> `ONBOARDED` -> `AGREEMENT` -> `WELCOME_MESSAGE`),
+  one explicit OPS call per stage, no skipping. There is no
+  audit-history table and no generated POS ID in this schema - if you
+  need either later, they'd be additional tables/columns beyond the
+  2-table spec this project currently follows.
 - **No link expiry**: `onboarding_link` never expires on its own (no
   `expires_at` column in the spec). A link stops working only when ops
   sends the record back (the token is rotated) or once the record is
-  locked (`UNDER_REVIEW` / `APPROVED` / `ACTIVE`).
+  locked (any status from `SUBMITTED` onward - see `onboarding.LOCKED_STATUSES`).

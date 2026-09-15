@@ -1,5 +1,5 @@
 $kind: http-request
-description: Manually promotes an active POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ACTIVE. Stamps pos_conversion_date, which feeds the Ageing Report.
+description: Manually promotes an onboarded POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ONBOARDED. Stamps pos_conversion_date, which feeds the Ageing Report.
 url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/convert-to-pos"
 method: POST
 headers:

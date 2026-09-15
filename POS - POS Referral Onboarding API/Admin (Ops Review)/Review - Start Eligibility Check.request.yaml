@@ -1,5 +1,5 @@
 $kind: http-request
-description: Approves and activates the record (status -> ACTIVE).
+description: SUBMITTED -> UNDER_REVIEW. OPS begins the eligibility check.
 url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
 method: POST
 headers:
@@ -8,7 +8,7 @@ body:
   type: text
   content: |-
     {
-      "action": "APPROVE",
+      "next_status": "UNDER_REVIEW",
       "reviewed_by": "OPS01"
     }
 order: 2000

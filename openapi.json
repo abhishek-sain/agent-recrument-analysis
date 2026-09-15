@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "POS / POS Referral Onboarding API",
-    "description": "Backend for the digital onboarding flow (link generation, form, documents, approvals). Login/auth is provided by an existing system and is not part of this service.",
+    "description": "Backend for the digital onboarding flow (link generation, form, documents, approvals) for POS, POS Referral, and BQP Employee. Login/auth is provided by an existing system and is not part of this service.",
     "version": "1.0.0"
   },
   "servers": [
@@ -22,7 +22,7 @@
           "links"
         ],
         "summary": "Generate Link",
-        "description": "Called by the SM (Sales Manager) app after the SM logs in and enters\nthe POS / Referral name + mobile number. Creates the onboarding\nrecord and returns a token + shareable URL - nothing is rendered by\nthis backend; the URL points at a route the frontend team owns.",
+        "description": "Called by the SM (Sales Manager) app after the SM logs in and enters\nthe POS / Referral name + mobile number. Creates the onboarding\nrecord and returns a token + shareable URL - nothing is rendered by\nthis backend; the URL points at a route the frontend team owns.\n\nPOS / POS Referral only - BQP Employees skip link generation\nentirely, see POST /api/v1/employees/onboard.",
         "operationId": "generate_link_api_v1_links_generate_post",
         "requestBody": {
           "content": {
@@ -64,7 +64,7 @@
           "links"
         ],
         "summary": "Resolve Link",
-        "description": "The frontend's onboarding page calls this on load (using the :token\nfrom its own route) to validate the link and get the prefill data\n(name, number, user_type, current status) needed to render the\ncorrect form/step. This is how the shared link \"renders\" on the\nfrontend - the backend never serves HTML, it only backs the route.",
+        "description": "The frontend's onboarding page calls this on load (using the :token\nfrom its own route) to validate the link and get the prefill data\n(name, number, email, user_type, current status) needed to render\nthe correct form/step, pre-filled and non-editable. This is how the\nshared link \"renders\" on the frontend - the backend never serves\nHTML, it only backs the route.",
         "operationId": "resolve_link_api_v1_links__token__get",
         "parameters": [
           {
@@ -84,6 +84,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LinkPrefillResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/employees/onboard": {
+      "post": {
+        "tags": [
+          "employees"
+        ],
+        "summary": "Onboard Employee",
+        "description": "BQP Employee onboarding - no SM, no link generation. The employee\n(or whoever raises it) submits name/number/email directly; user_type\nis forced to EMPLOYEE and the record starts at FORM_IN_PROGRESS\n(there's no LINK_GENERATED stage since no link exists). The\nreturned token drives the same onboarding/document endpoints as the\nPOS/Referral flow - PUT .../onboarding/{token}/form,\nPOST .../onboarding/{token}/documents, POST .../onboarding/{token}/submit.\n\nDocument data extraction (PAN/Aadhaar/bank details into\ndocument_details) is done by a separate document-processing service\ncalling the existing PUT .../documents/{pan,aadhaar,bank}-details\nendpoints - nothing extra needed here for that.",
+        "operationId": "onboard_employee_api_v1_employees_onboard_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeOnboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeOnboardResponse"
                 }
               }
             }
@@ -254,7 +296,7 @@
           "onboarding"
         ],
         "summary": "Submit Form",
-        "description": "Final \"Review & Submit\" step. Runs basic form/document validation and\na duplicate check, then moves the record into the approval workflow\n(UNDER_REVIEW), matching the \"System Processing\" stage in the flow.",
+        "description": "Final \"Review & Submit\" step, same for POS/Referral/Employee. Runs\nbasic form/document validation and a duplicate-number check, then\nmoves the record to SUBMITTED - OPS explicitly starts the\neligibility check from there (POST .../admin/onboarding/{id}/review\nwith next_status=UNDER_REVIEW).",
         "operationId": "submit_form_api_v1_onboarding__token__submit_post",
         "parameters": [
           {
@@ -560,6 +602,7 @@
           "admin"
         ],
         "summary": "Review Onboarding",
+        "description": "Moves a record one step through the OPS pipeline:\nSUBMITTED -> UNDER_REVIEW -> UNDER_TRAINING -> ONBOARDED -> AGREEMENT\n-> WELCOME_MESSAGE, no skipping. REJECTED/SEND_BACK are only legal\nwhile at UNDER_REVIEW (eligibility check).",
         "operationId": "review_onboarding_api_v1_admin_onboarding__record_id__review_post",
         "parameters": [
           {
@@ -612,7 +655,7 @@
           "admin"
         ],
         "summary": "Convert To Pos",
-        "description": "Manually promotes an active POS Referral to a full POS. Feeds the\nAgeing Report: joining_date (set on approval) and pos_conversion_date\n(set here) together give the \"how long were they a referral\" duration.",
+        "description": "Manually promotes an onboarded POS Referral to a full POS. Feeds the\nAgeing Report: joining_date (set on first reaching ONBOARDED) and\npos_conversion_date (set here) together give the \"how long were they\na referral\" duration.",
         "operationId": "convert_to_pos_api_v1_admin_onboarding__record_id__convert_to_pos_post",
         "parameters": [
           {
@@ -1536,6 +1579,65 @@
         ],
         "title": "DocumentUploadResponse"
       },
+      "EmployeeOnboardRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "title": "Name"
+          },
+          "number": {
+            "type": "string",
+            "maxLength": 15,
+            "title": "Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "raised_by": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Raised By",
+            "description": "Employee code of whoever is raising this request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "number",
+          "raised_by"
+        ],
+        "title": "EmployeeOnboardRequest",
+        "description": "BQP Employee onboarding has no link-generation step - the employee\n(or whoever is raising it on their behalf) fills this directly.\nuser_type is always EMPLOYEE; there's nothing to choose here."
+      },
+      "EmployeeOnboardResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "token"
+        ],
+        "title": "EmployeeOnboardResponse",
+        "description": "No onboarding_url here - there's no link to share. token is the same\nhandle used everywhere else (PUT .../onboarding/{token}/form,\nPOST .../onboarding/{token}/documents, etc.) - the employee's own\nclient just holds onto it directly instead of receiving it via URL."
+      },
       "GenerateLinkRequest": {
         "properties": {
           "name": {
@@ -1633,6 +1735,17 @@
             "type": "string",
             "title": "Number"
           },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
           "user_type": {
             "$ref": "#/components/schemas/UserType"
           },
@@ -1648,7 +1761,8 @@
           "user_type",
           "status"
         ],
-        "title": "LinkPrefillResponse"
+        "title": "LinkPrefillResponse",
+        "description": "What the frontend pre-fills, non-editable, when the POS/Referral\nopens their link - name/number/email/user_type are locked in at\nlink-generation time; everything else is filled in by the user."
       },
       "OnboardingFormUpdate": {
         "properties": {
@@ -1663,17 +1777,6 @@
               }
             ],
             "title": "Dob"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
           },
           "city": {
             "anyOf": [
@@ -1721,7 +1824,7 @@
         },
         "type": "object",
         "title": "OnboardingFormUpdate",
-        "description": "Partial/upsert payload for the fields users_data actually has.\nterms_and_conditions is NOT editable here - it's a fixed value set at\ncreation, editable only via PUT .../terms-and-conditions."
+        "description": "Partial/upsert payload for the fields the user fills in themselves.\nname/number/email/user_type are set at link-generation (or, for a\nBQP Employee, at POST /api/v1/employees/onboard) and are NOT\neditable here - pre-filled and locked per spec. terms_and_conditions\nis also NOT editable here - fixed at creation, editable only via\nPUT .../terms-and-conditions."
       },
       "OnboardingListItem": {
         "properties": {
@@ -2001,12 +2104,15 @@
           "FORM_IN_PROGRESS",
           "SUBMITTED",
           "UNDER_REVIEW",
+          "UNDER_TRAINING",
+          "ONBOARDED",
+          "AGREEMENT",
+          "WELCOME_MESSAGE",
           "SEND_BACK",
-          "REJECTED",
-          "APPROVED",
-          "ACTIVE"
+          "REJECTED"
         ],
-        "title": "OnboardingStatus"
+        "title": "OnboardingStatus",
+        "description": "Pipeline (POS / POS Referral / BQP Employee all share it once a\nrecord exists):\n\n  LINK_GENERATED (POS/Referral only - set at link creation, an\n  Employee record starts at FORM_IN_PROGRESS since there's no link)\n    -> FORM_IN_PROGRESS (first form save)\n    -> SUBMITTED (user submits)\n    -> UNDER_REVIEW (OPS starts the eligibility check)\n    -> UNDER_TRAINING\n    -> ONBOARDED (joining_date is stamped here - see UsersData.joining_date)\n    -> AGREEMENT\n    -> WELCOME_MESSAGE\n\nREJECTED / SEND_BACK are the only exits, and only from UNDER_REVIEW\n(eligibility check failed). SEND_BACK rotates the token and unlocks\nthe form for corrections; REJECTED is terminal.\n\nOPS drives every UNDER_REVIEW -> ... -> WELCOME_MESSAGE transition\nexplicitly via POST /api/v1/admin/onboarding/{id}/review - see\napp.routers.workflow.PIPELINE_ORDER."
       },
       "PanDetailsUpdate": {
         "properties": {
@@ -2081,19 +2187,10 @@
         "type": "object",
         "title": "PanDetailsUpdate"
       },
-      "ReviewAction": {
-        "type": "string",
-        "enum": [
-          "APPROVE",
-          "REJECT",
-          "SEND_BACK"
-        ],
-        "title": "ReviewAction"
-      },
       "ReviewRequest": {
         "properties": {
-          "action": {
-            "$ref": "#/components/schemas/ReviewAction"
+          "next_status": {
+            "$ref": "#/components/schemas/OnboardingStatus"
           },
           "reviewed_by": {
             "type": "string",
@@ -2102,10 +2199,11 @@
         },
         "type": "object",
         "required": [
-          "action",
+          "next_status",
           "reviewed_by"
         ],
-        "title": "ReviewRequest"
+        "title": "ReviewRequest",
+        "description": "next_status must be the immediate next stage in the pipeline\n(see app.routers.workflow.PIPELINE_ORDER) - e.g. from UNDER_REVIEW\nyou may only move to UNDER_TRAINING, REJECTED, or SEND_BACK; no\nskipping stages. REJECTED/SEND_BACK are only legal while the record\nis at UNDER_REVIEW (the eligibility-check stage)."
       },
       "ReviewResponse": {
         "properties": {
@@ -2192,7 +2290,8 @@
         "type": "string",
         "enum": [
           "POS",
-          "POS_REFERRAL"
+          "POS_REFERRAL",
+          "EMPLOYEE"
         ],
         "title": "UserType"
       },

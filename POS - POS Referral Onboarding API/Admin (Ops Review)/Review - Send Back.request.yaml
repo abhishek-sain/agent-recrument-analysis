@@ -1,5 +1,5 @@
 $kind: http-request
-description: Rotates the onboarding token and returns a fresh new_onboarding_url to resend to the POS/Referral.
+description: Only legal from UNDER_REVIEW. Rotates the onboarding token/link and re-opens the form for corrections; returns a fresh new_onboarding_url to resend.
 url: "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review"
 method: POST
 headers:
@@ -8,7 +8,7 @@ body:
   type: text
   content: |-
     {
-      "action": "SEND_BACK",
+      "next_status": "SEND_BACK",
       "reviewed_by": "OPS01"
     }
 scripts:
@@ -17,4 +17,4 @@ scripts:
       const data = pm.response.json();
       if (data.new_onboarding_url) { console.log('New link issued:', data.new_onboarding_url); }
     language: text/javascript
-order: 4000
+order: 2600

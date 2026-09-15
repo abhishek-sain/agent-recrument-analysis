@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "POS / POS Referral Onboarding API",
-    "description": "FastAPI backend for the digital onboarding flow: SM link generation, self-onboarding for POS / POS Referral, document upload, ops approval workflow, POS Referral -> POS conversion, and the Ageing Report. Backed by 2 SQL Server tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/Education extracted fields). Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.\n\nFlow to test end-to-end:\n1. Links > Generate Onboarding Link (SM) - sets {{token}} and {{record_id}} automatically\n2. Links > Resolve Link (Frontend)\n3. Onboarding > Save Form\n4. Documents > Upload Document (run once per doc_type)\n5. Onboarding > Submit\n6. Admin > List Under Review\n7. Admin > Review (Approve / Reject / Send Back) - APPROVE stamps joining_date\n8. Admin > Convert to POS - only for an ACTIVE POS_REFERRAL record; stamps pos_conversion_date\n9. Reports > Ageing Report - Date of Joining -> POS Referral -> POS Conversion Date, with ageing_days and within_90_days",
+    "description": "FastAPI backend for the digital onboarding flow, covering three user types: POS, POS Referral (both via SM link generation), and BQP Employee (direct, no link). Backed by exactly 2 tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/bank extracted fields), running on SQL Server. Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.\n\nStatus pipeline (all 3 user types, once a record exists):\nLINK_GENERATED (POS/Referral only) -> FORM_IN_PROGRESS -> SUBMITTED -> UNDER_REVIEW (eligibility check) -> UNDER_TRAINING -> ONBOARDED -> AGREEMENT -> WELCOME_MESSAGE.\nREJECTED / SEND_BACK are the only exits, and only from UNDER_REVIEW. Each forward step is a separate Admin > Review call with next_status set to the immediate next stage - no skipping.\n\nFlow to test end-to-end (POS / POS Referral):\n1. Links > Generate Onboarding Link (SM) - sets {{token}} and {{record_id}} automatically\n2. Links > Resolve Link (Frontend) - name/number/email/user_type come back pre-filled, non-editable\n3. Onboarding > Save Form\n4. Documents > Upload Document (run once per doc_type) + Save PAN/Aadhaar/Bank Details\n5. Onboarding > Submit - moves to SUBMITTED\n6. Admin > List Onboarding Records (filter by status)\n7. Admin > Review, one call per stage: Start Eligibility Check -> Start Training -> Mark Onboarded (stamps joining_date) -> Send Agreement -> Send Welcome Message. Reject / Send Back only from UNDER_REVIEW.\n8. Admin > Convert to POS - only for an ONBOARDED POS_REFERRAL record; stamps pos_conversion_date\n9. Reports > Ageing Report - Date of Joining -> POS Referral -> POS Conversion Date, with ageing_days and within_90_days\n\nFlow to test end-to-end (BQP Employee) - skips steps 1-2 above:\n1. Employees > Onboard Employee (BQP) - creates the record directly (user_type=EMPLOYEE), sets {{token}}/{{record_id}}, no link ever generated\n2. Documents > Upload Document + Save PAN/Aadhaar/Bank Details - a separate document-processing service may also call these directly after OCR extraction\n3. Onboarding > Submit, then the same Admin > Review pipeline as above (steps 6-7)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_postman_id": "pos-onboarding-api-collection"
   },
@@ -115,6 +115,54 @@
             },
             "description": "Called by the frontend's onboarding page on load to validate the token and fetch prefill data (name, number, user_type, status) before rendering the form."
           }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Onboard Employee (BQP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"number\": \"9812345670\",\n  \"email\": \"priya@example.com\",\n  \"raised_by\": \"EMP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/employees/onboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employees",
+                "onboard"
+              ]
+            },
+            "description": "BQP Employee onboarding - no link generation. Creates the users_data row directly (user_type=EMPLOYEE, status=FORM_IN_PROGRESS) and returns a token - use it against the same PUT .../onboarding/{token}/form, POST .../onboarding/{token}/documents, and POST .../onboarding/{token}/submit endpoints as the POS/Referral flow."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('token', data.token);",
+                  "pm.collectionVariables.set('record_id', data.id);",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -561,14 +609,14 @@
                 {
                   "key": "status",
                   "value": "UNDER_REVIEW",
-                  "description": "Optional. One of LINK_GENERATED, FORM_IN_PROGRESS, SUBMITTED, UNDER_REVIEW, SEND_BACK, REJECTED, APPROVED, ACTIVE"
+                  "description": "Optional. One of LINK_GENERATED, FORM_IN_PROGRESS, SUBMITTED, UNDER_REVIEW, UNDER_TRAINING, ONBOARDED, AGREEMENT, WELCOME_MESSAGE, SEND_BACK, REJECTED"
                 }
               ]
             }
           }
         },
         {
-          "name": "Review - Approve",
+          "name": "Review - Start Eligibility Check",
           "request": {
             "method": "POST",
             "header": [
@@ -579,7 +627,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"APPROVE\",\n  \"reviewed_by\": \"OPS01\"\n}"
+              "raw": "{\n  \"next_status\": \"UNDER_REVIEW\",\n  \"reviewed_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
@@ -595,7 +643,131 @@
                 "review"
               ]
             },
-            "description": "Approves and activates the record (status -> ACTIVE). Also stamps joining_date the first time this happens - this feeds the Ageing Report."
+            "description": "SUBMITTED -> UNDER_REVIEW. OPS begins the eligibility check."
+          }
+        },
+        {
+          "name": "Review - Start Training",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"next_status\": \"UNDER_TRAINING\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
+            },
+            "description": "UNDER_REVIEW -> UNDER_TRAINING. Eligibility check passed."
+          }
+        },
+        {
+          "name": "Review - Mark Onboarded",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"next_status\": \"ONBOARDED\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
+            },
+            "description": "UNDER_TRAINING -> ONBOARDED. Stamps joining_date the first time this happens (feeds the Ageing Report). This also unlocks POS Referral -> POS conversion."
+          }
+        },
+        {
+          "name": "Review - Send Agreement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"next_status\": \"AGREEMENT\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
+            },
+            "description": "ONBOARDED -> AGREEMENT."
+          }
+        },
+        {
+          "name": "Review - Send Welcome Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"next_status\": \"WELCOME_MESSAGE\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
+            },
+            "description": "AGREEMENT -> WELCOME_MESSAGE. Final stage of the pipeline."
           }
         },
         {
@@ -610,7 +782,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"REJECT\",\n  \"reviewed_by\": \"OPS01\"\n}"
+              "raw": "{\n  \"next_status\": \"REJECTED\",\n  \"reviewed_by\": \"OPS01\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
@@ -625,11 +797,40 @@
                 "{{record_id}}",
                 "review"
               ]
-            }
+            },
+            "description": "Only legal from UNDER_REVIEW (eligibility check failed). Terminal."
           }
         },
         {
           "name": "Review - Send Back",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"next_status\": \"SEND_BACK\",\n  \"reviewed_by\": \"OPS01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "onboarding",
+                "{{record_id}}",
+                "review"
+              ]
+            },
+            "description": "Only legal from UNDER_REVIEW. Rotates the onboarding token/link and re-opens the form for corrections; returns a fresh new_onboarding_url to resend."
+          },
           "event": [
             {
               "listen": "test",
@@ -641,35 +842,7 @@
                 ]
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"SEND_BACK\",\n  \"reviewed_by\": \"OPS01\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/admin/onboarding/{{record_id}}/review",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "onboarding",
-                "{{record_id}}",
-                "review"
-              ]
-            },
-            "description": "Rotates the onboarding token and returns a fresh new_onboarding_url to resend to the POS/Referral."
-          }
+          ]
         },
         {
           "name": "Convert to POS",
@@ -699,7 +872,7 @@
                 "convert-to-pos"
               ]
             },
-            "description": "Manually promotes an active POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ACTIVE. Stamps pos_conversion_date, which feeds the Ageing Report."
+            "description": "Manually promotes an onboarded POS Referral to a full POS. Only works when user_type=POS_REFERRAL and status=ONBOARDED. Stamps pos_conversion_date, which feeds the Ageing Report."
           }
         },
         {

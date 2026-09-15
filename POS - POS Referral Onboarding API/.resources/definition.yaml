@@ -1,18 +1,27 @@
 $kind: collection
 name: POS / POS Referral Onboarding API
 description: |-
-  FastAPI backend for the digital onboarding flow: SM link generation, self-onboarding for POS / POS Referral, document upload, and ops approval workflow. Backed by exactly 2 tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/Education extracted fields), running on SQL Server. Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.
+  FastAPI backend for the digital onboarding flow, covering three user types: POS, POS Referral (both via SM link generation), and BQP Employee (direct, no link). Backed by exactly 2 tables - users_data (Table-1) and document_details (Table-2: PAN/Aadhaar/bank extracted fields), running on SQL Server. Record ids are human-readable ticket ids like TKT-12-09-2026-143059-7 (users_data) / DOC-12-09-2026-143059-4 (document_details), not UUIDs. Login/auth is provided by an existing system and is NOT part of this collection.
 
-  Flow to test end-to-end:
+  Status pipeline (all 3 user types, once a record exists):
+  LINK_GENERATED (POS/Referral only) -> FORM_IN_PROGRESS -> SUBMITTED -> UNDER_REVIEW (eligibility check) -> UNDER_TRAINING -> ONBOARDED -> AGREEMENT -> WELCOME_MESSAGE.
+  REJECTED / SEND_BACK are the only exits, and only from UNDER_REVIEW. Each forward step is a separate Admin > Review call with next_status set to the immediate next stage - no skipping.
+
+  Flow to test end-to-end (POS / POS Referral):
   1. Links > Generate Onboarding Link (SM) - sets {{token}} and {{record_id}} automatically
-  2. Links > Resolve Link (Frontend)
+  2. Links > Resolve Link (Frontend) - name/number/email/user_type come back pre-filled, non-editable
   3. Onboarding > Save Form
-  4. Documents > Upload Document (run once per doc_type)
-  5. Onboarding > Submit
-  6. Admin > List Under Review
-  7. Admin > Review (Approve / Reject / Send Back) - APPROVE stamps joining_date
-  8. Admin > Convert to POS - only for an ACTIVE POS_REFERRAL record; stamps pos_conversion_date
+  4. Documents > Upload Document (run once per doc_type) + Save PAN/Aadhaar/Bank Details
+  5. Onboarding > Submit - moves to SUBMITTED
+  6. Admin > List Onboarding Records (filter by status)
+  7. Admin > Review, one call per stage: Start Eligibility Check -> Start Training -> Mark Onboarded (stamps joining_date) -> Send Agreement -> Send Welcome Message. Reject / Send Back only from UNDER_REVIEW.
+  8. Admin > Convert to POS - only for an ONBOARDED POS_REFERRAL record; stamps pos_conversion_date
   9. Reports > Ageing Report - Date of Joining -> POS Referral -> POS Conversion Date, with ageing_days and within_90_days
+
+  Flow to test end-to-end (BQP Employee) - skips steps 1-2 above:
+  1. Employees > Onboard Employee (BQP) - creates the record directly (user_type=EMPLOYEE), sets {{token}}/{{record_id}}, no link ever generated
+  2. Documents > Upload Document + Save PAN/Aadhaar/Bank Details - a separate document-processing service may also call these directly after OCR extraction
+  3. Onboarding > Submit, then the same Admin > Review pipeline as above (steps 6-7)
 variables:
   base_url: http://localhost:8000
   token: ""

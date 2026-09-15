@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.routers import documents, links, onboarding, records, reports, workflow
+from app.routers import documents, employees, links, onboarding, records, reports, workflow
 
 app = FastAPI(
     title="POS / POS Referral Onboarding API",
-    description="Backend for the digital onboarding flow (link generation, form, documents, approvals). Login/auth is provided by an existing system and is not part of this service.",
+    description="Backend for the digital onboarding flow (link generation, form, documents, approvals) for POS, POS Referral, and BQP Employee. Login/auth is provided by an existing system and is not part of this service.",
     version="1.0.0",
     root_path=settings.ROOT_PATH,
     servers=[
@@ -31,6 +31,7 @@ if settings.STORAGE_BACKEND == "local":
     app.mount("/files", StaticFiles(directory=settings.UPLOAD_DIR), name="files")
 
 app.include_router(links.router)
+app.include_router(employees.router)
 app.include_router(onboarding.router)
 app.include_router(documents.router)
 app.include_router(workflow.router)
