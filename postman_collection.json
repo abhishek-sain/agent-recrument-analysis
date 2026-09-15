@@ -372,6 +372,42 @@
           }
         },
         {
+          "name": "Upload Document - PASSBOOK",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PASSBOOK",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "onboarding",
+                "{{token}}",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "doc_type",
+                  "value": "PASSBOOK"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Upload Document - EDUCATIONAL_QUALIFICATION",
           "request": {
             "method": "POST",
@@ -695,7 +731,7 @@
                 }
               ]
             },
-            "description": "Full users_data table - every column, every record."
+            "description": "Full users_data table, paginated (default 50, max 200 per page). Each row includes its document_details (PAN/Aadhaar/bank), joined on users_data_id - null if that record has not saved any yet."
           }
         },
         {
@@ -716,7 +752,7 @@
                 "{{record_id}}"
               ]
             },
-            "description": "Single users_data row by its id (e.g. TKT-12-09-2026-143059-7)."
+            "description": "Single users_data row by its id (e.g. TKT-12-09-2026-143059-7), including its document_details (PAN/Aadhaar/bank), joined on users_data_id - null if not saved yet."
           }
         },
         {

@@ -158,7 +158,7 @@ afterward.
 `user_type`, `onboarding_link` (the full shareable URL, e.g.
 `http://.../onboard/pos/nO5Z-...`), `dob`, `email`, `city`,
 `state`, `pincode`, `pan_card`, `educational_qualification`, `aadhaar`,
-`photograph`, `cancelled_cheque` (all five as S3/file URLs),
+`photograph`, `cancelled_cheque`, `passbook` (all six as S3/file URLs),
 `terms_and_conditions`, `consent`, `raised_by`, `status`, `created_at`,
 `updated_at`, `updated_by`, `reviewed_by`, `joining_date`,
 `pos_conversion_date`.

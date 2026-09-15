@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/onboarding/{{token}}/documents?doc_type=PASSBOOK"
+method: POST
+queryParams:
+  doc_type: PASSBOOK
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: []
+order: 5500

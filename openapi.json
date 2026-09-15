@@ -1513,7 +1513,8 @@
           "AADHAAR",
           "EDUCATIONAL_QUALIFICATION",
           "PHOTOGRAPH",
-          "CANCELLED_CHEQUE"
+          "CANCELLED_CHEQUE",
+          "PASSBOOK"
         ],
         "title": "DocumentType",
         "description": "Which users_data file column an uploaded file is stored against."
@@ -1914,6 +1915,17 @@
               }
             ],
             "title": "Cancelled Cheque"
+          },
+          "passbook": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passbook"
           },
           "terms_and_conditions": {
             "anyOf": [
@@ -2318,6 +2330,17 @@
               }
             ],
             "title": "Cancelled Cheque"
+          },
+          "passbook": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passbook"
           },
           "terms_and_conditions": {
             "anyOf": [

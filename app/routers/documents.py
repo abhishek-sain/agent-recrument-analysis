@@ -22,6 +22,7 @@ DOC_FIELD_MAP = {
     DocumentType.EDUCATIONAL_QUALIFICATION: "educational_qualification",
     DocumentType.PHOTOGRAPH: "photograph",
     DocumentType.CANCELLED_CHEQUE: "cancelled_cheque",
+    DocumentType.PASSBOOK: "passbook",
 }
 
 

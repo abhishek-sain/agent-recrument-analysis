@@ -44,6 +44,7 @@ class OnboardingRecordResponse(BaseModel):
     aadhaar: str | None = None
     photograph: str | None = None
     cancelled_cheque: str | None = None
+    passbook: str | None = None
 
     terms_and_conditions: str | None = None
     consent: ConsentStatus | None = None

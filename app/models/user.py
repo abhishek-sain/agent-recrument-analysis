@@ -60,6 +60,7 @@ class UsersData(Base):
     aadhaar: Mapped[str | None] = mapped_column(String, nullable=True)
     photograph: Mapped[str | None] = mapped_column(String, nullable=True)
     cancelled_cheque: Mapped[str | None] = mapped_column(String, nullable=True)
+    passbook: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     terms_and_conditions: Mapped[str | None] = mapped_column(
         String, nullable=True, default=DEFAULT_TERMS_AND_CONDITIONS, server_default=DEFAULT_TERMS_AND_CONDITIONS
